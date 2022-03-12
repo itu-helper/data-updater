@@ -1,7 +1,7 @@
 class DataManager {
-    LESSON_PATH = "https://raw.githubusercontent.com/itu-helper/data-updater/main/lesson_rows.txt";
-    COURSE_PATH = "https://raw.githubusercontent.com/itu-helper/data-updater/main/course_rows.txt";
-    COURSE_PLAN_PATH = "https://raw.githubusercontent.com/itu-helper/data-updater/main/course_plans.txt";
+    LESSON_PATH = "https://raw.githubusercontent.com/itu-helper/data/main/lesson_rows.txt";
+    COURSE_PATH = "https://raw.githubusercontent.com/itu-helper/data/main/course_rows.txt";
+    COURSE_PLAN_PATH = "https://raw.githubusercontent.com/itu-helper/data/main/course_plans.txt";
 
     constructor() {
         this._courses = [];

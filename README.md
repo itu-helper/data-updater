@@ -58,10 +58,10 @@ _Github Actions_ kullanarak **Veri Yenileme Aralıkları** kısmında belirtilen
 Öncelikle `<body>` _tag_'inin alt kısmına şu satırları yazarak scriptleri importlamanız lazım.
 
 ```html
-<script src="https://cdn.jsdelivr.net/gh/itu-helper/data@master/assets/js/lesson.js"></script>
-<script src="https://cdn.jsdelivr.net/gh/itu-helper/data@master/assets/js/course.js"></script>
-<script src="https://cdn.jsdelivr.net/gh/itu-helper/data@master/assets/js/course_group.js"></script>
-<script src="https://cdn.jsdelivr.net/gh/itu-helper/data@master/assets/js/data_manager.js"></script>
+<script src="https://cdn.jsdelivr.net/gh/itu-helper/data-updater@master/assets/js/lesson.js"></script>
+<script src="https://cdn.jsdelivr.net/gh/itu-helper/data-updater@master/assets/js/course.js"></script>
+<script src="https://cdn.jsdelivr.net/gh/itu-helper/data-updater@master/assets/js/course_group.js"></script>
+<script src="https://cdn.jsdelivr.net/gh/itu-helper/data-updater@master/assets/js/data_manager.js"></script>
 ```
 
 Daha sonra verilere erişmek için bir `DataManager` nesnesi oluşturmanız ve verileri okumanız lazım.
