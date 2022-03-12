@@ -1,10 +1,10 @@
 <div align="center">
 
-![GitHub Workflow Status](https://img.shields.io/github/workflow/status/itu-helper/data/Refresh%20Lessons?label=Refreshing%20Lesson%20Data&style=flat-square)
-![GitHub Workflow Status](https://img.shields.io/github/workflow/status/itu-helper/data/Refresh%20Courses%20&%20Course%20Plans?label=Refreshing%20Course%20Data&style=flat-square)
-![GitHub repo size](https://img.shields.io/github/repo-size/itu-helper/data?style=flat-square)
-![GitHub](https://img.shields.io/github/license/itu-helper/data?style=flat-square)
-![GitHub issues](https://img.shields.io/github/issues-raw/itu-helper/data)
+![GitHub Workflow Status](https://img.shields.io/github/workflow/status/itu-helper/data-updater/Refresh%20Lessons?label=Refreshing%20Lesson%20Data&style=flat-square)
+![GitHub Workflow Status](https://img.shields.io/github/workflow/status/itu-helper/data-updater/Refresh%20Courses%20&%20Course%20Plans?label=Refreshing%20Course%20Data&style=flat-square)
+![GitHub repo size](https://img.shields.io/github/repo-size/itu-helper/data-updater?style=flat-square)
+![GitHub](https://img.shields.io/github/license/itu-helper/data-updater?style=flat-square)
+![GitHub issues](https://img.shields.io/github/issues-raw/itu-helper/data-updater)
 
 # **ITU Helper**
 
