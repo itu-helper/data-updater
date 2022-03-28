@@ -26,7 +26,7 @@ def extract_from_a(a):
 
 def split_lesson_row(row):
     return row.replace("<tr>", "").replace(
-        "</tr>", "").replace("</td>", "").replace("<br>", "").replace("</br>", "").split("<td>")[1:]
+        "</tr>", "").replace("</td>", "").replace("<br>", " ").replace("</br>", "").split("<td>")[1:]
 
 
 def process_lesson_row(row):
