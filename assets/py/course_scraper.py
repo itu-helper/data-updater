@@ -1,12 +1,15 @@
+from bs4 import BeautifulSoup
 from selenium.webdriver.common.by import By
 from selenium.webdriver.common.action_chains import ActionChains
 from tqdm import tqdm
+from requests import get
 
 from scraper import Scraper
 
 
 class CourseScraper(Scraper):
-    def scrap_current_table(self):
+    def scrap_current_table(self, snt_courses_url):
+        self.snt_courses_url = snt_courses_url
         rows = self.find_elements_by_tag("tr")
 
         # Filter out the header rows.
@@ -49,4 +52,29 @@ class CourseScraper(Scraper):
 
             courses += self.scrap_current_table()
 
-        return courses
+        print("====== Scraping Additional Courses from SNT ======")
+
+        data = get(self.snt_courses_url).text
+        soup = BeautifulSoup(data, "html.parser")
+        snt_course_lines = [
+            a.get_text().replace("\xa0", "")
+            for a in soup.find_all("a") if "SNT 1" in a.get_text() or "SNT 2" in a.get_text()
+        ]
+
+        snt_course_rows = []
+        for snt in tqdm(snt_course_lines):
+            splitted_snt = snt.split(" ")
+            course_code = f"{splitted_snt[0]} {splitted_snt[1]}"
+
+            course_title = ""
+            for word in splitted_snt[2:]:
+                course_title += word + " "
+
+            # We use <td> to split the data in the run.py, thats why we seperate with it.
+            snt_course_rows.append(
+                "<td>" + course_code + "<td>" + course_title.strip() + "<td> <td> ")
+
+        # Remove Dupes.
+        snt_course_rows = list(dict.fromkeys(snt_course_rows).keys())
+
+        return courses + snt_course_rows

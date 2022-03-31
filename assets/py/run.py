@@ -9,9 +9,10 @@ from driver_manager import DriverManager
 from lesson_scraper import LessonScraper
 from course_plan_scraper import CoursePlanScraper
 
-LESSONS_URL = 'https://www.sis.itu.edu.tr/TR/ogrenci/ders-programi/ders-programi.php?seviye=LS'
-COURSES_URL = 'https://www.sis.itu.edu.tr/TR/ogrenci/lisans/onsartlar/onsartlar.php'
-COURSE_PLANS_URL = 'https://www.sis.itu.edu.tr/TR/ogrenci/lisans/ders-planlari/ders-planlari.php?fakulte='
+LESSONS_URL = "https://www.sis.itu.edu.tr/TR/ogrenci/ders-programi/ders-programi.php?seviye=LS"
+COURSES_URL = "https://www.sis.itu.edu.tr/TR/ogrenci/lisans/onsartlar/onsartlar.php"
+SNT_COURSES_URL = "https://sanat.itu.edu.tr/dersler/snt-kodlu-dersler"
+COURSE_PLANS_URL = "https://www.sis.itu.edu.tr/TR/ogrenci/lisans/ders-planlari/ders-planlari.php?fakulte="
 
 LESSONS_FILE_NAME = "data/lesson_rows"
 COURSE_FILE_NAME = "data/course_rows"
@@ -21,6 +22,8 @@ COURSE_ROWS_WARNING_LINE = "# FOLLOWING LINES WHERE ADDED FOR THE MISSING LESSON
 
 
 def extract_from_a(a):
+    if ">" not in a:
+        return a
     return a.split(">")[1].split("<")[0].strip()
 
 
@@ -130,9 +133,14 @@ def save_course_rows(rows):
     except Exception:
         pass
 
+    lines_to_secure_to_remove = []
     for line_to_secure in lines_to_secure:
-        if line_to_secure in lines:
-            lines_to_secure.remove(line_to_secure)
+        for line in lines:
+            if line.split("|")[0] == line_to_secure.split("|")[0]:
+                lines_to_secure_to_remove.append(line_to_secure)
+
+    for r in lines_to_secure_to_remove:
+        lines_to_secure.remove(r)
 
     with open(f"../../{COURSE_FILE_NAME}.txt", "w", encoding="utf-8") as f:
         f.writelines(lines + lines_to_secure)
@@ -201,7 +209,7 @@ if __name__ == "__main__":
         sleep(3)
 
         # Scrap and save the courses.
-        course_scraper = CourseScraper(driver)
+        course_scraper = CourseScraper(driver, SNT_COURSES_URL)
         course_rows = course_scraper.scrap_tables()
         save_course_rows(course_rows)
 
