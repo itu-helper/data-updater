@@ -8,8 +8,12 @@ from scraper import Scraper
 
 
 class CourseScraper(Scraper):
-    def scrap_current_table(self, snt_courses_url):
+
+    def __init__(self, driver, snt_courses_url):
         self.snt_courses_url = snt_courses_url
+        super().__init__(driver)
+
+    def scrap_current_table(self):
         rows = self.find_elements_by_tag("tr")
 
         # Filter out the header rows.
