@@ -1,4 +1,3 @@
-from re import L
 from time import sleep, perf_counter
 from rich import print as rprint
 from tqdm import tqdm
@@ -7,16 +6,21 @@ import argparse
 from course_scraper import CourseScraper
 from driver_manager import DriverManager
 from lesson_scraper import LessonScraper
+from misc_scraper import MiscScraper
 from course_plan_scraper import CoursePlanScraper
 
 LESSONS_URL = "https://www.sis.itu.edu.tr/TR/ogrenci/ders-programi/ders-programi.php?seviye=LS"
 COURSES_URL = "https://www.sis.itu.edu.tr/TR/ogrenci/lisans/onsartlar/onsartlar.php"
 SNT_COURSES_URL = "https://sanat.itu.edu.tr/dersler/snt-kodlu-dersler"
 COURSE_PLANS_URL = "https://www.sis.itu.edu.tr/TR/ogrenci/lisans/ders-planlari/ders-planlari.php?fakulte="
+BUILDING_CODES_URL = "https://www.sis.itu.edu.tr/TR/obs-hakkinda/bina-kodlari.php"
+PROGRAMME_CODES_URL = "https://www.sis.itu.edu.tr/TR/obs-hakkinda/lisans-program-kodlari.php"
 
 LESSONS_FILE_NAME = "data/lesson_rows"
 COURSE_FILE_NAME = "data/course_rows"
 COURSE_PLANS_FILE_NAME = "data/course_plans"
+BUILDING_CODES_FILE_NAME = "data/building_codes"
+PROGRAMME_CODES_FILE_NAME = "data/programme_codes"
 
 COURSE_ROWS_WARNING_LINE = "# FOLLOWING LINES WHERE ADDED FOR THE MISSING LESSONS. \n"
 
@@ -187,9 +191,19 @@ def save_course_plans(faculties, faculty_order):
 
                     lines.append(line + "\n")
 
-    # Save elines.
+    # Save lines.
     with open(f"../../{COURSE_PLANS_FILE_NAME}.txt", "w", encoding="utf-8") as f:
         f.writelines(lines)
+
+
+def save_misc_data(data):
+    # BUILDING DATA
+    with open(f"../../{BUILDING_CODES_FILE_NAME}.txt", "w", encoding="utf-8") as f:
+        f.writelines(data[0])
+
+    # PROGRAMME DATA
+    with open(f"../../{PROGRAMME_CODES_FILE_NAME}.txt", "w", encoding="utf-8") as f:
+        f.writelines(data[1])
 
 
 parser = argparse.ArgumentParser(description="Scraps data from ITU's website.")
@@ -223,6 +237,15 @@ if __name__ == "__main__":
         course_plan_scraper = CoursePlanScraper(driver)
         faculties, faculty_order = course_plan_scraper.scrap_course_plans()
         save_course_plans(faculties, faculty_order)
+
+    elif args.scrap_target == "misc":
+        misc_scraper = MiscScraper(
+            BUILDING_CODES_URL, PROGRAMME_CODES_URL
+        )
+
+        data = misc_scraper.scrap_data()
+
+        save_misc_data(data)
 
     elif args.scrap_target == "lesson":
         # Open the site, then wait for it to be loaded.

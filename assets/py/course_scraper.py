@@ -58,10 +58,11 @@ class CourseScraper(Scraper):
 
         print("====== Scraping Additional Courses from SNT ======")
 
-        data = get(self.snt_courses_url).text
-        soup = BeautifulSoup(data, "html.parser")
+        r = get(self.snt_courses_url)
+        r.encoding = r.apparent_encoding
+        soup = BeautifulSoup(r.text, "html.parser", from_encoding="utf-8")
         snt_course_lines = [
-            a.get_text().replace("\xa0", "")
+            a.get_text()
             for a in soup.find_all("a") if "SNT 1" in a.get_text() or "SNT 2" in a.get_text()
         ]
 

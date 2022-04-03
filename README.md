@@ -2,6 +2,7 @@
 
 ![GitHub Workflow Status](https://img.shields.io/github/workflow/status/itu-helper/data-updater/Refresh%20Lessons?label=Refreshing%20Lesson%20Data&style=flat-square)
 ![GitHub Workflow Status](https://img.shields.io/github/workflow/status/itu-helper/data-updater/Refresh%20Courses%20&%20Course%20Plans?label=Refreshing%20Course%20Data&style=flat-square)
+![GitHub Workflow Status](https://img.shields.io/github/workflow/status/itu-helper/data-updater/Refresh%20Misc?label=Refreshing%20Misc&style=flat-square)
 ![GitHub repo size](https://img.shields.io/github/repo-size/itu-helper/data-updater?style=flat-square)
 ![GitHub](https://img.shields.io/github/license/itu-helper/data-updater?style=flat-square)
 ![GitHub issues](https://img.shields.io/github/issues-raw/itu-helper/data-updater)
@@ -36,6 +37,7 @@ _Github Actions_ kullanarak **Veri Yenileme Aralıkları** kısmında belirtilen
 ## **Veri Yenileme Aralıkları**
 
 -   **(00:04 - 02:49) 15dk da bir**: _Lesson_'lar güncellenir.
+-   **(02:55)**: Bina kodları ve program kodları güncellenir.
 -   **(03:00)**: _Course_'lar ve Ders Planları güncellenir.
 -   **(04:04 - 23:49) 15dk da bir**: _Lesson_'lar güncellenir.
 

@@ -1,0 +1,69 @@
+name: Refresh Misc
+
+on:
+  schedule:
+    # At 23:55.
+    - cron: "55 23 * * *"
+
+  workflow_dispatch:
+
+jobs:
+  refresh_misc:
+    runs-on: ubuntu-latest
+
+    steps:
+      # Clones the repo
+      - name: Checkout Repo Content
+        uses: actions/checkout@v2
+
+      # Clones the data repo
+      - name: Clone Data Repo
+        uses: actions/checkout@v2
+        with:
+          repository: itu-helper/data
+          token: ${{ secrets.API_TOKEN_GITHUB }}
+          path: ./data/
+
+      # Go Back to the main repo
+      - name: Back to Main Repo
+        run: |
+          cd ..
+
+      # Sets up python
+      - name: Python Setup
+        uses: actions/setup-python@v2.3.1
+        with:
+          python-version: 3.9
+
+      # Install the python requirements via pip
+      - name: Install Python Requirements
+        run: pip install -r requirements.txt
+
+      # Run the python script
+      - name: Python Run
+        run: |
+          cd assets/py
+          python run.py -scrap_target misc
+
+        # Commits the changes back to the data repo
+      - name: Push building_codes.txt to Data
+        uses: dmnemec/copy_file_to_another_repo_action@main
+        env:
+          API_TOKEN_GITHUB: ${{ secrets.API_TOKEN_GITHUB }}
+        with:
+          source_file: './data/building_codes.txt'
+          destination_repo: 'itu-helper/data'
+          user_email: 'data-updater@itu-helper.com'
+          user_name: 'ITU Helper'
+
+        # Commits the changes back to the data repo
+      - name: Push programme_codes.txt to Data
+        uses: dmnemec/copy_file_to_another_repo_action@main
+        env:
+          API_TOKEN_GITHUB: ${{ secrets.API_TOKEN_GITHUB }}
+        with:
+          source_file: './data/programme_codes.txt'
+          destination_repo: 'itu-helper/data'
+          user_email: 'data-updater@itu-helper.com'
+          user_name: 'ITU Helper'
+
