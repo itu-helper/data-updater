@@ -55,7 +55,7 @@ _Github Actions_ kullanarak **Veri Yenileme Aralıkları** kısmında belirtilen
 
 ## **Nasıl Kullanılır?**
 
-### **Verileri data_manager.js ile Okumak (Javascript için)**
+### **Verileri itu_helper.js ile Okumak (Javascript için)**
 
 Öncelikle `<body>` _tag_'inin alt kısmına şu satırları yazarak scriptleri importlamanız lazım.
 
@@ -63,32 +63,32 @@ _Github Actions_ kullanarak **Veri Yenileme Aralıkları** kısmında belirtilen
 <script src="https://cdn.jsdelivr.net/gh/itu-helper/data-updater@master/assets/js/lesson.js"></script>
 <script src="https://cdn.jsdelivr.net/gh/itu-helper/data-updater@master/assets/js/course.js"></script>
 <script src="https://cdn.jsdelivr.net/gh/itu-helper/data-updater@master/assets/js/course_group.js"></script>
-<script src="https://cdn.jsdelivr.net/gh/itu-helper/data-updater@master/assets/js/data_manager.js"></script>
+<script src="https://cdn.jsdelivr.net/gh/itu-helper/data-updater@master/assets/js/itu_helper.js"></script>
 ```
 
-Daha sonra verilere erişmek için bir `DataManager` nesnesi oluşturmanız ve verileri okumanız lazım.
+Daha sonra verilere erişmek için bir `ITUHelper` nesnesi oluşturmanız ve verileri okumanız lazım.
 
 ```javascript
-// dataManager oluştur.
-var dataManager = new DataManager();
+// Verileri tutacak nesneyi oluştur.
+var ituHelper = new ITUHelper();
 
-// verileri oku.
-dataManager.readAllTextFiles();
+// Verileri oku.
+ituHelper.fetchData();
 ```
 
-> :warning: `dataManager`'dan verilere erişmeye ilk çalıştığınızda, verilere erişildiğinde `dataManager.onFileLoad` fonksiyonu çalışıtırılacak, bu fonksiyonun varsayılan değeri `() => {}` şekildedir, sitenizde donma vs. gibi durumları önlemek için bu fonksiyonu kullanabilirsiniz.
+> :warning: `ituHelper`'dan verilere erişmeye ilk çalıştığınızda, verilere erişildiğinde `ituHelper.onFetchComplete` fonksiyonu çalışıtırılacak, bu fonksiyonun varsayılan değeri `() => {}` şekildedir, sitenizde donma vs. gibi durumları önlemek için bu fonksiyonu kullanabilirsiniz.
 
 Verileri okuduktan sonra aşağıdaki şekildeki gibi istediğiniz verilere erişebilirsiniz
 
 ```javascript
 // courses içinde bütün Course'ları barındıran bir
-var courses = dataManager.courses;
+var courses = ituHelper.courses;
 
 // semesters bir dictionary, ders planına erişmek istediğiniz dersi
 // semesters["fakülte"]["program"]["iterasyon"] şekilde seçerek
 // 8 elemanlı bir semester array'i alabilirsiniz. Semester array'inin
 // her bir elemanı da bir Course arrayi.
-var semesters = dataManager.semesters;
+var semesters = ituHelper.semesters;
 ```
 
 ### **Verileri Manuel Okumak**
@@ -101,6 +101,10 @@ Aşağıdaki linkerden verilere erişebilir ve bu verileri kendiniz işleyebilir
 
 `course_plans.txt`: https://raw.githubusercontent.com/itu-helper/data/main/course_plans.txt
 
+`building_codes.txt`: https://raw.githubusercontent.com/itu-helper/data/main/building_codes.txt
+
+`programme_codes.txt`: https://raw.githubusercontent.com/itu-helper/data/main/programme_codes.txt
+
 #### **Python Örneği**
 
 Aşağıdaki kodda requests library'si ile CRN ile dersin [bu sayfadaki](https://www.sis.itu.edu.tr/TR/ogrenci/ders-programi/ders-programi.php?seviye=LS) satırına 6 satırda erişme gösterilmiştir.
@@ -111,7 +115,7 @@ from requests import get
 URL = "https://raw.githubusercontent.com/itu-helper/data/main/lesson_rows.txt"
 
 page = get(URL)
-# page.text bize her satırı, table elementleri "|" ile, table rowlaro "\n" ile ayrılmış şekilde returnler.
+# page.text bize her satırı, table elementleri "|" ile, table rowları ise "\n" ile ayrılmış bir şekilde returnler.
 lines = page.text.split("\n")
 
 # Her satırı "|" ile ayırarak tablodaki elemanlara erişiyoruz ve CRN'yi dictionary'nin key'i olacak şekilde dictionary compherension yapıyoruz.

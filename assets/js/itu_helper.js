@@ -1,63 +1,89 @@
-class DataManager {
+class ITUHelper {
     LESSON_PATH = "https://raw.githubusercontent.com/itu-helper/data/main/lesson_rows.txt";
     COURSE_PATH = "https://raw.githubusercontent.com/itu-helper/data/main/course_rows.txt";
     COURSE_PLAN_PATH = "https://raw.githubusercontent.com/itu-helper/data/main/course_plans.txt";
 
     constructor() {
-        this._courses = [];
-        this._semesters = {};
+        this.#courses = [];
+        this.#semesters = {};
         this.coursesDict = {};
 
-        this.fileLoadStatus = 0;
-        this.onFileLoad = () => { };
+        this.fileFetchStatus = 0;
+        this.onFetchComplete = () => { };
     }
 
+    /**
+     * a list of `Course` objects.
+     * 
+     * ⚠️NOTE: `fetchData` must be called before accessing this property.
+     */
     get courses() {
-        if (this._courses.length <= 0) {
-            this.createCourses();
-            this._courses.forEach(course => {
+        if (this.#courses.length <= 0) {
+            this.#createCourses();
+            this.#courses.forEach(course => {
                 this.coursesDict[course.courseCode] = course;
             });
-            this.createLessons();
-            this.connectAllCourses();
+            this.#createLessons();
+            this.#connectAllCourses();
         }
 
-        return this._courses;
+        return this.#courses;
     }
 
+    /**
+    * a dictionary of dictionaries of dictionaries of arrays of `Course` & `CourseGroup` arrays.
+    * Where each array represents a semester.
+    * 
+    * Structure:
+    * 
+    * `semesters["faculty name"]["programme name"]["iteration name"]` 
+    * 
+    * Example:
+    * 
+    * `semesters["Bilgisayar ve Bilişim Fakültesi"]["Yapay Zeka ve Veri Mühendisliği (% 100 İngilizce)"]["2021-2022 Güz Dönemi Sonrası"]`
+    * 
+    * ⚠️NOTE: `fetchData` must be called before accessing this property.
+    */
     get semesters() {
-        if (Object.keys(this._semesters).length <= 0) {
+        if (Object.keys(this.#semesters).length <= 0) {
             this.courses;
-            this.createSemesters();
+            this.#createSemesters();
         }
 
-        return this._semesters;
+        return this.#semesters;
     }
 
-    readAllTextFiles() {
-        this.readTextFile(this.LESSON_PATH, (txt) => {
+    /**
+     * fetches the data from itu-helper/data repo, calls `onFetchComplete`
+     * when all files are fetches.
+     */
+    fetchData() {
+        this.#fetchTextFile(this.LESSON_PATH, (txt) => {
             this.lesson_lines = txt.split("\n");
-            this.onFileLoadSuccess();
+            this.#onTextFetchSuccess();
         });
-        this.readTextFile(this.COURSE_PATH, (txt) => {
+        this.#fetchTextFile(this.COURSE_PATH, (txt) => {
             this.course_lines = txt.split("\n");
-            this.onFileLoadSuccess();
+            this.#onTextFetchSuccess();
         });
-        this.readTextFile(this.COURSE_PLAN_PATH, (txt) => {
+        this.#fetchTextFile(this.COURSE_PLAN_PATH, (txt) => {
             this.course_plan_lines = txt.split("\n");
-            this.onFileLoadSuccess();
+            this.#onTextFetchSuccess();
         });
     }
 
-    onFileLoadSuccess() {
-        this.fileLoadStatus++;
-        if (this.fileLoadStatus >= 3)
-            this.onFileLoad();
+    #onTextFetchSuccess() {
+        this.fileFetchStatus++;
+        if (this.fileFetchStatus >= 3)
+            this.onFetchComplete();
     }
 
-    createCourses() {
+    /**
+     * processes `course_lines` to create the `courses` array.
+     */
+    #createCourses() {
         let lines = this.course_lines;
-        this._courses = [];
+        this.#courses = [];
         this.coursesDict = {};
 
         for (let i = 0; i < lines.length; i++) {
@@ -68,11 +94,15 @@ class DataManager {
             let data = line.split("|");
             let course = new Course(data[0], data[1], data[2], data[3]);
 
-            this._courses.push(course);
+            this.#courses.push(course);
         }
     }
 
-    createLessons() {
+    /**
+     * processes `lesson_lines` to create lessons and add them to
+     * corresponding courses of the `courses` array.
+     */
+    #createLessons() {
         let lines = this.lesson_lines;
         for (let i = 0; i < lines.length; i++) {
             let line = lines[i].replace("\r", "");
@@ -84,26 +114,37 @@ class DataManager {
                 data[5], data[6], data[7], data[8]);
 
             let course = this.findCourseByCode(courseCode);
-            if (course) continue;
+            if (!course) continue;
 
             course.lessons.push(currentLesson);
             course.majorRest = majorRest;
         }
     }
 
-    connectAllCourses() {
-        this._courses.forEach(course => {
-            course.connectCourses();
+    /**
+     * calls the `course.connectCourses` method for all courses in the `courses` array.
+     */
+    #connectAllCourses() {
+        this.#courses.forEach(course => {
+            course.connectCourses(this);
         });
     }
 
+    /**
+     * 
+     * @param {string} courseCode the code of the course, Ex: "MAT 281E"
+     * @returns the corresponding course in the `courses` array,
+     * if the `courseCode` argument is empty returns null. If it is not empty
+     * but a match cannot be found, creates a new course with the given title 
+     * and the name `"Auto Generated Course"` and returns it.
+     */
     findCourseByCode(courseCode) {
         let course = this.coursesDict[courseCode];
         if (course == undefined) {
             if (courseCode === "") return null;
             course = new Course(courseCode, "Auto Generated Course", "", "");
             course.requirements = [];
-            this._courses.push(course);
+            this.#courses.push(course);
             this.coursesDict[courseCode] = course;
 
             // console.warn("[Course Generation] " + courseCode + " got auto-generated.");
@@ -112,12 +153,16 @@ class DataManager {
         return course;
     }
 
-    createSemesters() {
+    /**
+     * processes `course_plan_lines` to create the course plans
+     * and fills it with the courses in the `courses` array.
+     */
+    #createSemesters() {
         let currentFaculty = "";
         let currentProgram = "";
         let currentIteration = "";
         let currentSemesters = [];
-        this._semesters = [];
+        this.#semesters = [];
 
         let lines = this.course_plan_lines;
         for (let i = 0; i < lines.length; i++) {
@@ -128,18 +173,18 @@ class DataManager {
                 let title = line.slice(hashtagCount + 1).trim();
                 if (hashtagCount == 1) {
                     currentFaculty = title;
-                    this._semesters[currentFaculty] = {};
+                    this.#semesters[currentFaculty] = {};
                 }
                 if (hashtagCount == 2) {
                     // Check if the last program had any iterations
                     // If not delete it.
-                    if (this._semesters[currentFaculty][currentProgram] != undefined) {
-                        if (!Object.keys(this._semesters[currentFaculty][currentProgram]).length)
-                            delete this._semesters[currentFaculty][currentProgram];
+                    if (this.#semesters[currentFaculty][currentProgram] != undefined) {
+                        if (!Object.keys(this.#semesters[currentFaculty][currentProgram]).length)
+                            delete this.#semesters[currentFaculty][currentProgram];
                     }
 
                     currentProgram = title;
-                    this._semesters[currentFaculty][currentProgram] = {};
+                    this.#semesters[currentFaculty][currentProgram] = {};
                 }
                 if (hashtagCount == 3)
                     currentIteration = title;
@@ -173,12 +218,16 @@ class DataManager {
                 currentSemesters.push(semester);
 
                 if (currentSemesters.length == 8)
-                    this._semesters[currentFaculty][currentProgram][currentIteration] = currentSemesters;
+                    this.#semesters[currentFaculty][currentProgram][currentIteration] = currentSemesters;
             }
         }
     }
 
-    readTextFile(path, onSuccess) {
+    /**
+     * @param {string} path path of the text file to fetch.
+     * @param {*} onSuccess the method to call on success.
+     */
+    #fetchTextFile(path, onSuccess) {
         $.ajax({
             url: path,
             type: 'get',
