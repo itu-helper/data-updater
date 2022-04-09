@@ -4,8 +4,8 @@ class ITUHelper {
     COURSE_PLAN_PATH = "https://raw.githubusercontent.com/itu-helper/data/main/course_plans.txt";
 
     constructor() {
-        this.#courses = [];
-        this.#semesters = {};
+        this._courses = [];
+        this._semesters = {};
         this.coursesDict = {};
 
         this.fileFetchStatus = 0;
@@ -18,16 +18,16 @@ class ITUHelper {
      * ⚠️NOTE: `fetchData` must be called before accessing this property.
      */
     get courses() {
-        if (this.#courses.length <= 0) {
-            this.#createCourses();
-            this.#courses.forEach(course => {
+        if (this._courses.length <= 0) {
+            this._createCourses();
+            this._courses.forEach(course => {
                 this.coursesDict[course.courseCode] = course;
             });
-            this.#createLessons();
-            this.#connectAllCourses();
+            this._createLessons();
+            this._connectAllCourses();
         }
 
-        return this.#courses;
+        return this._courses;
     }
 
     /**
@@ -45,12 +45,12 @@ class ITUHelper {
     * ⚠️NOTE: `fetchData` must be called before accessing this property.
     */
     get semesters() {
-        if (Object.keys(this.#semesters).length <= 0) {
+        if (Object.keys(this._semesters).length <= 0) {
             this.courses;
-            this.#createSemesters();
+            this._createSemesters();
         }
 
-        return this.#semesters;
+        return this._semesters;
     }
 
     /**
@@ -58,21 +58,21 @@ class ITUHelper {
      * when all files are fetches.
      */
     fetchData() {
-        this.#fetchTextFile(this.LESSON_PATH, (txt) => {
+        this._fetchTextFile(this.LESSON_PATH, (txt) => {
             this.lesson_lines = txt.split("\n");
-            this.#onTextFetchSuccess();
+            this._onTextFetchSuccess();
         });
-        this.#fetchTextFile(this.COURSE_PATH, (txt) => {
+        this._fetchTextFile(this.COURSE_PATH, (txt) => {
             this.course_lines = txt.split("\n");
-            this.#onTextFetchSuccess();
+            this._onTextFetchSuccess();
         });
-        this.#fetchTextFile(this.COURSE_PLAN_PATH, (txt) => {
+        this._fetchTextFile(this.COURSE_PLAN_PATH, (txt) => {
             this.course_plan_lines = txt.split("\n");
-            this.#onTextFetchSuccess();
+            this._onTextFetchSuccess();
         });
     }
 
-    #onTextFetchSuccess() {
+    _onTextFetchSuccess() {
         this.fileFetchStatus++;
         if (this.fileFetchStatus >= 3)
             this.onFetchComplete();
@@ -81,9 +81,9 @@ class ITUHelper {
     /**
      * processes `course_lines` to create the `courses` array.
      */
-    #createCourses() {
+    _createCourses() {
         let lines = this.course_lines;
-        this.#courses = [];
+        this._courses = [];
         this.coursesDict = {};
 
         for (let i = 0; i < lines.length; i++) {
@@ -94,7 +94,7 @@ class ITUHelper {
             let data = line.split("|");
             let course = new Course(data[0], data[1], data[2], data[3]);
 
-            this.#courses.push(course);
+            this._courses.push(course);
         }
     }
 
@@ -102,7 +102,7 @@ class ITUHelper {
      * processes `lesson_lines` to create lessons and add them to
      * corresponding courses of the `courses` array.
      */
-    #createLessons() {
+    _createLessons() {
         let lines = this.lesson_lines;
         for (let i = 0; i < lines.length; i++) {
             let line = lines[i].replace("\r", "");
@@ -124,8 +124,8 @@ class ITUHelper {
     /**
      * calls the `course.connectCourses` method for all courses in the `courses` array.
      */
-    #connectAllCourses() {
-        this.#courses.forEach(course => {
+    _connectAllCourses() {
+        this._courses.forEach(course => {
             course.connectCourses(this);
         });
     }
@@ -144,7 +144,7 @@ class ITUHelper {
             if (courseCode === "") return null;
             course = new Course(courseCode, "Auto Generated Course", "", "");
             course.requirements = [];
-            this.#courses.push(course);
+            this._courses.push(course);
             this.coursesDict[courseCode] = course;
 
             // console.warn("[Course Generation] " + courseCode + " got auto-generated.");
@@ -157,12 +157,12 @@ class ITUHelper {
      * processes `course_plan_lines` to create the course plans
      * and fills it with the courses in the `courses` array.
      */
-    #createSemesters() {
+    _createSemesters() {
         let currentFaculty = "";
         let currentProgram = "";
         let currentIteration = "";
         let currentSemesters = [];
-        this.#semesters = [];
+        this._semesters = [];
 
         let lines = this.course_plan_lines;
         for (let i = 0; i < lines.length; i++) {
@@ -173,18 +173,18 @@ class ITUHelper {
                 let title = line.slice(hashtagCount + 1).trim();
                 if (hashtagCount == 1) {
                     currentFaculty = title;
-                    this.#semesters[currentFaculty] = {};
+                    this._semesters[currentFaculty] = {};
                 }
                 if (hashtagCount == 2) {
                     // Check if the last program had any iterations
                     // If not delete it.
-                    if (this.#semesters[currentFaculty][currentProgram] != undefined) {
-                        if (!Object.keys(this.#semesters[currentFaculty][currentProgram]).length)
-                            delete this.#semesters[currentFaculty][currentProgram];
+                    if (this._semesters[currentFaculty][currentProgram] != undefined) {
+                        if (!Object.keys(this._semesters[currentFaculty][currentProgram]).length)
+                            delete this._semesters[currentFaculty][currentProgram];
                     }
 
                     currentProgram = title;
-                    this.#semesters[currentFaculty][currentProgram] = {};
+                    this._semesters[currentFaculty][currentProgram] = {};
                 }
                 if (hashtagCount == 3)
                     currentIteration = title;
@@ -218,7 +218,7 @@ class ITUHelper {
                 currentSemesters.push(semester);
 
                 if (currentSemesters.length == 8)
-                    this.#semesters[currentFaculty][currentProgram][currentIteration] = currentSemesters;
+                    this._semesters[currentFaculty][currentProgram][currentIteration] = currentSemesters;
             }
         }
     }
@@ -227,7 +227,7 @@ class ITUHelper {
      * @param {string} path path of the text file to fetch.
      * @param {*} onSuccess the method to call on success.
      */
-    #fetchTextFile(path, onSuccess) {
+    _fetchTextFile(path, onSuccess) {
         $.ajax({
             url: path,
             type: 'get',

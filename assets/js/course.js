@@ -7,17 +7,17 @@ class Course {
         this.majorRestrictions = "";
         this.lessons = [];
 
-        this.#createRequirementNames(requirementsText);
+        this._createRequirementNames(requirementsText);
     }
 
     /**
      * parses the `requirementsText` and creates `this._requirementNames` array.
      * @param {string} requirementsText the text written in ITU's site for requirements
      */
-    #createRequirementNames(requirementsText) {
+    _createRequirementNames(requirementsText) {
         //  (MAT 201 MIN DDveya MAT 201E MIN DDveya MAT 210 MIN DDveya MAT 210E MIN DD)ve (EHB 211 MIN DDveya EHB 211E MIN DD)
         //  FIZ 102 MIN DDveya FIZ 102E MIN DDveya EHB 211 MIN DDveya EHB 211E MIN DD
-        this.#requirementNames = [];
+        this._requirementNames = [];
 
         // If there are no requirements, return an empty list.
         if (requirementsText.includes("Yok")) {
@@ -43,7 +43,7 @@ class Course {
             // is no "ve" or "veya" in the line.
             // ex: '(FIZ 101 MIN DD' ...
             if (i == 0) {
-                this.#requirementNames.push([words[0] + " " + words[1]]);
+                this._requirementNames.push([words[0] + " " + words[1]]);
                 continue
             }
 
@@ -55,24 +55,24 @@ class Course {
 
             // Append to the last array.
             if (logicGate == "veya")
-                this.#requirementNames[this.#requirementNames.length - 1].push(requirementName);
+                this._requirementNames[this._requirementNames.length - 1].push(requirementName);
             // Create a new array.
             else if (logicGate == "ve")
-                this.#requirementNames.push([requirementName]);
+                this._requirementNames.push([requirementName]);
         }
     }
 
     /**
-     * creates `this.requirements` array by replacing the names in `this.#requirementNames`
+     * creates `this.requirements` array by replacing the names in `this._requirementNames`
      * with the courses of the given `ITUHelper` object.
      * @param {ITUHelper} ituHelper
      */
     connectCourses(ituHelper) {
         this.requirements = [];
-        for (let i = 0; i < this.#requirementNames.length; i++) {
+        for (let i = 0; i < this._requirementNames.length; i++) {
             this.requirements.push([]);
-            for (let j = 0; j < this.#requirementNames[i].length; j++) {
-                let course = ituHelper.findCourseByCode(this.#requirementNames[i][j]);
+            for (let j = 0; j < this._requirementNames[i].length; j++) {
+                let course = ituHelper.findCourseByCode(this._requirementNames[i][j]);
                 if (course != null)
                     this.requirements[i].push(course);
             }
