@@ -1,0 +1,13 @@
+name: Keep Alive
+on:
+  schedule:
+    - cron: "0 0 * * *"
+
+jobs:
+  cronjob-based-github-action:
+    name: Cronjob based github action
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+      # commits to the repo if the last commit was 50 days ago to keep the repo alive.
+      - uses: gautamkrishnar/keepalive-workflow@v1
