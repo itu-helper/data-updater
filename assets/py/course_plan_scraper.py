@@ -183,7 +183,7 @@ class CoursePlanScraper(Scraper):
     def scrap_course_plans(self):
         def get_faculty_dropdown_options():
             self.generate_dropdown_options_faculty(self.webdriver)
-            return self.find_elements_by_tag("li")[69:85]
+            return self.find_elements_by_tag("li")[75:91]
 
         faculty_order = [x.find_element(By.TAG_NAME, "span").get_attribute("innerHTML")
                          for x in get_faculty_dropdown_options()]
