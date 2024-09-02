@@ -9,7 +9,7 @@ from lesson_scraper import LessonScraper
 from misc_scraper import MiscScraper
 from course_plan_scraper import CoursePlanScraper
 
-LESSONS_URL = "https://www.sis.itu.edu.tr/TR/ogrenci/ders-programi/ders-programi.php?seviye=LS"
+LESSONS_URL = "https://obs.itu.edu.tr/public/DersProgram"
 COURSES_URL = "https://www.sis.itu.edu.tr/TR/ogrenci/lisans/onsartlar/onsartlar.php"
 SNT_COURSES_URL = "https://sanat.itu.edu.tr/dersler/snt-kodlu-dersler"
 COURSE_PLANS_URL = "https://www.sis.itu.edu.tr/TR/ogrenci/lisans/ders-planlari/ders-planlari.php?fakulte="
@@ -254,6 +254,7 @@ if __name__ == "__main__":
 
         # Scrap and save the courses.
         lesson_scraper = LessonScraper(driver)
+        print("====== Scraping All Available Lessons ======")
         lesson_rows = lesson_scraper.scrap_tables()
         save_lesson_rows(lesson_rows)
 
