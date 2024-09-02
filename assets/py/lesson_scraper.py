@@ -43,10 +43,16 @@ class LessonScraper(Scraper):
             # The options we want are course codes, they start after the initial value of
             # the dropdown which is "Ders Kodu Seçiniz"
             start_index = 0
-            for i, o in enumerate(dropdown_options):
-                if "Ders Kodu Seçiniz" in o.get_attribute("innerHTML"):
-                    start_index = i + 1
-                    break
+            for _ in range(20):
+                for i, o in enumerate(dropdown_options):
+                    if "Ders Kodu Seçiniz" in o.get_attribute("innerHTML"):
+                        start_index = i + 1
+                        break
+                else:
+                    print("Course Dropdown is not loaded yet, waiting.")
+                    self.wait(5)
+                    continue
+                break
 
             submit_button = self.find_elements_by_tag("button")[0]
             return dropdown_options[start_index:], submit_button
