@@ -51,6 +51,7 @@ class LessonScraper(Scraper):
                 else:
                     print("Course Dropdown is not loaded yet, waiting.")
                     self.wait(5)
+                    dropdown_options = self.webdriver.find_elements(By.TAG_NAME, "option")
                     continue
                 break
 
