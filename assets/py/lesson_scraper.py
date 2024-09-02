@@ -29,6 +29,8 @@ class LessonScraper(Scraper):
 
     def generate_dropdown_options(self):
         dropdowns = self.find_elements_by_class("select2")  # Get all dropdowns in the page.
+        for d in dropdowns:
+            print(d)
         dropdowns[1].click()  # First, press the choose your education button.
 
         # Select undergraduate from the dropdown.
