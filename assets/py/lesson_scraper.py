@@ -28,11 +28,6 @@ class LessonScraper(Scraper):
             return self.scrap_current_table()
 
     def generate_dropdown_options(self):
-        dropdowns = self.find_elements_by_class("select2")  # Get all dropdowns in the page.
-        for d in dropdowns:
-            print(d)
-        dropdowns[1].click()  # First, press the choose your education button.
-
         # Select undergraduate from the dropdown.
         for option in self.find_elements_by_tag("option"):
             if option.get_attribute("value") == "LS":
@@ -40,20 +35,9 @@ class LessonScraper(Scraper):
                 self.wait()
                 break
 
-        dropdowns[1].click()  # Click the chose education button again to close the dropdown.
-        dropdowns[3].click()  # Finally, press the select course code dropdown.
-
-        return dropdowns[3]
-
-    def is_course_dropdown_expanded(self, dropdown) -> bool:
-        self.wait_until_loaded(dropdown)
-        if dropdown is None:
-            return False
-        return r'aria-expanded="true"' in dropdown.get_attribute("outerHTML")
-
     def scrap_tables(self) -> list[str]:
         def update_dropdown_references():
-            course_code_dropdown = self.generate_dropdown_options()
+            self.generate_dropdown_options()
             dropdown_options = self.webdriver.find_elements(By.TAG_NAME, "option")
 
             # The options we want are course codes, they start after the initial value of
@@ -65,9 +49,9 @@ class LessonScraper(Scraper):
                     break
 
             submit_button = self.find_elements_by_tag("button")[0]
-            return dropdown_options[start_index:], submit_button, course_code_dropdown
+            return dropdown_options[start_index:], submit_button
 
-        dropdown_options, submit_button, course_code_dropdown = update_dropdown_references()
+        dropdown_options, submit_button = update_dropdown_references()
         lessons, option_parent_tqdm = [], tqdm(range(0, len(dropdown_options)))
 
         for i in option_parent_tqdm:
@@ -78,20 +62,12 @@ class LessonScraper(Scraper):
                     dropdown_option = dropdown_options[i]
                     if dropdown_option is None: return []
         
-                    # Expand the course dropdown, if it isn't already expanded.
-                    if not self.is_course_dropdown_expanded(course_code_dropdown):
-                        course_code_dropdown.click()
-        
                     # Update the tqdm.
                     course_name = dropdown_option.get_attribute("innerHTML").strip()
                     option_parent_tqdm.set_description(f"Scraping \"{course_name}\" lessons - current total: {len(lessons):04}")
         
                     self.wait_until_loaded(dropdown_option)  # Wait for the dropdown option to load.
                     dropdown_option.click()  # Choose the current course from the dropdown.
-        
-                    # Minimize the course dropdown, if it isn't already minimized.
-                    if self.is_course_dropdown_expanded(course_code_dropdown):
-                        course_code_dropdown.click()
         
                     submit_button.click()  # Click Submit.
         
@@ -102,7 +78,7 @@ class LessonScraper(Scraper):
         
                     # Scrap the lessons. Because the script is fast, sometimes the lessons don't load,
                     # take that into account and wait a bit if lesson count is 0.
-                    for _ in range(10):
+                    for _ in range(20):
                         rows = self.scrap_current_table()
                         if len(rows) != 0:
                             break
