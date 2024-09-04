@@ -5,6 +5,7 @@ from selenium.common.exceptions import UnexpectedAlertPresentException
 from selenium.common.exceptions import StaleElementReferenceException
 
 from scraper import Scraper
+from logger import Logger
 
 
 class LessonScraper(Scraper):
@@ -49,7 +50,7 @@ class LessonScraper(Scraper):
                         start_index = i + 1
                         break
                 else:
-                    print("Course Dropdown is not loaded yet, waiting.")
+                    Logger.log_warning("Course Dropdown is not loaded yet, waiting.")
                     self.wait(5)
                     dropdown_options = self.webdriver.find_elements(By.TAG_NAME, "option")
                     continue
@@ -122,16 +123,16 @@ class LessonScraper(Scraper):
 
             rows = self.scrap_current_table()   # Scrap the courses.
             if len(rows) == 0:
-                print(f"no rows found for {course_name}, trying again.")
+                Logger.log_warning(f"no rows found for {course_name}, trying again.")
                 self.wait(5)
                 rows = self.scrap_current_table()   # Scrap the courses.
-                print(f"{len(rows)} rows found for {course_name}")
+                Logger.log_warning(f"{len(rows)} rows found for {course_name}")
             
             self.wait()  # Wait a bit, just in case an alert appears.
             
             return rows
 
-        print("====== Scraping All Available Lessons ======")
+        Logger.log_info("Scraping All Available Lessons")
         for i in option_parent_tqdm:
             for _ in range(10):  # This is basically just a while True loop with some safety measures.
                 try:

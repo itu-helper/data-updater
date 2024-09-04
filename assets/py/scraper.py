@@ -42,12 +42,3 @@ class Scraper:
             return True
         except Exception:
             return False
-
-    def get_dropdown_option_if_available(self, option):
-        if len(option.find_elements(By.TAG_NAME, "a")) <= 0:
-            return None
-        if option.find_elements(By.TAG_NAME, "a")[0].get_attribute("role") != "option":
-            return None
-        if "Seçiniz" in option.find_elements(By.TAG_NAME, "a")[0].get_attribute("innerHTML"):
-            return None
-        return option.find_elements(By.TAG_NAME, "a")[0]
