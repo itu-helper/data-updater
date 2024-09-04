@@ -33,7 +33,7 @@ jobs:
       - name: Python Setup
         uses: actions/setup-python@v2.3.1
         with:
-          python-version: 3.9
+          python-version: 3.11
 
       # Install the python requirements via pip
       - name: Install Python Requirements
@@ -66,4 +66,3 @@ jobs:
           destination_repo: 'itu-helper/data'
           user_email: 'data-updater@itu-helper.com'
           user_name: 'ITU Helper'
-

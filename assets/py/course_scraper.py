@@ -3,6 +3,7 @@ from selenium.webdriver.common.by import By
 from selenium.webdriver.common.action_chains import ActionChains
 from tqdm import tqdm
 from requests import get
+from logger import Logger
 
 from scraper import Scraper
 
@@ -33,7 +34,7 @@ class CourseScraper(Scraper):
             # First index is the "Select something" option
             return self.find_elements_by_tag("ul")[14].find_elements(By.TAG_NAME, "li")[1:]
 
-        print("====== Scraping All Courses ======")
+        Logger.log_info("====== Scraping All Courses ======")
         courses = []
         option_parent_tqdms = tqdm(range(len(get_dropdown_options())))
         for i in option_parent_tqdms:
@@ -56,7 +57,7 @@ class CourseScraper(Scraper):
 
             courses += self.scrap_current_table()
 
-        print("====== Scraping Additional Courses from SNT ======")
+        Logger.log_info("Scraping Additional Courses from SNT")
 
         r = get(self.snt_courses_url)
         r.encoding = r.apparent_encoding

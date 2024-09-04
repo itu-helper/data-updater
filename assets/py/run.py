@@ -1,5 +1,4 @@
 from time import sleep, perf_counter
-from rich import print as rprint
 from tqdm import tqdm
 import argparse
 
@@ -8,8 +7,9 @@ from driver_manager import DriverManager
 from lesson_scraper import LessonScraper
 from misc_scraper import MiscScraper
 from course_plan_scraper import CoursePlanScraper
+from logger import Logger
 
-LESSONS_URL = "https://www.sis.itu.edu.tr/TR/ogrenci/ders-programi/ders-programi.php?seviye=LS"
+LESSONS_URL = "https://obs.itu.edu.tr/public/DersProgram"
 COURSES_URL = "https://www.sis.itu.edu.tr/TR/ogrenci/lisans/onsartlar/onsartlar.php"
 SNT_COURSES_URL = "https://sanat.itu.edu.tr/dersler/snt-kodlu-dersler"
 COURSE_PLANS_URL = "https://www.sis.itu.edu.tr/TR/ogrenci/lisans/ders-planlari/ders-planlari.php?fakulte="
@@ -55,7 +55,7 @@ def process_lesson_row(row):
 
 
 def save_lesson_rows(rows):
-    print("Saving Lesson Rows...")
+    Logger.log_info("Saving Lesson Rows...")
 
     # Save each row to a different line.
     lines = [process_lesson_row(row) + "\n" for row in rows]
@@ -120,7 +120,7 @@ def process_course_row(row):
 
 
 def save_course_rows(rows):
-    print("Saving Course Rows...")
+    Logger.log_info("Saving Course Rows...")
 
     # Save each row to a different line.
     lines = [process_course_row(row) + "\n" for row in rows]
@@ -150,7 +150,7 @@ def save_course_rows(rows):
         f.writelines(lines + lines_to_secure)
 
 
-def save_course_plans(faculties, faculty_order):
+def save_course_plans(faculty_course_plans, faculty_order):
     # faculties dictionary is structure example:
 
     # faculties['İTÜ Kuzey Kıbrıs']['Deniz Ulaştırma İşletme Mühendisliği']
@@ -166,11 +166,11 @@ def save_course_plans(faculties, faculty_order):
     for faculty in faculties_tqdm:
         faculties_tqdm.set_description(f"Saving Course Plans of \"{faculty}\"")
         lines.append(f"# {faculty}\n")
-        for faculty_plan in faculties[faculty].keys():
+        for faculty_plan in faculty_course_plans[faculty].keys():
             lines.append(f"## {faculty_plan}\n")
-            for faculty_plan_iter in faculties[faculty][faculty_plan]:
+            for faculty_plan_iter in faculty_course_plans[faculty][faculty_plan]:
                 lines.append(f"### {faculty_plan_iter}\n")
-                for i, semester in enumerate(faculties[faculty][faculty_plan][faculty_plan_iter]):
+                for i, semester in enumerate(faculty_course_plans[faculty][faculty_plan][faculty_plan_iter]):
                     line = ""
                     for j, course in enumerate(semester):
                         if type(course) is dict:
@@ -235,13 +235,11 @@ if __name__ == "__main__":
 
         # Scrap and save the courses.
         course_plan_scraper = CoursePlanScraper(driver)
-        faculties, faculty_order = course_plan_scraper.scrap_course_plans()
-        save_course_plans(faculties, faculty_order)
+        faculty_course_plans, faculty_order = course_plan_scraper.scrap_course_plans()
+        save_course_plans(faculty_course_plans, faculty_order)
 
     elif args.scrap_target == "misc":
-        misc_scraper = MiscScraper(
-            BUILDING_CODES_URL, PROGRAMME_CODES_URL
-        )
+        misc_scraper = MiscScraper(BUILDING_CODES_URL, PROGRAMME_CODES_URL)
 
         data = misc_scraper.scrap_data()
 
@@ -254,11 +252,11 @@ if __name__ == "__main__":
 
         # Scrap and save the courses.
         lesson_scraper = LessonScraper(driver)
+        Logger.log_info("Scraping All Available Lessons")
         lesson_rows = lesson_scraper.scrap_tables()
         save_lesson_rows(lesson_rows)
 
-    driver.quit()
+    DriverManager.kill_driver(driver)
 
     t1 = perf_counter()
-    rprint(
-        f"Scraping & Saving Completed in [green]{round(t1 - t0, 2)}[white] seconds")
+    Logger.log_info(f"Scraping & Saving Completed in [green]{round(t1 - t0, 2)}[/green] seconds")
