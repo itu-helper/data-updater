@@ -32,7 +32,7 @@ _ITU Helper_'a [_bu adresten_](https://itu-helper.github.io/home/) ulaşabilirsi
 
 ## **Ne İşe Yarar?**
 
-_Github Actions_ kullanarak **Veri Yenileme Aralıkları** kısmında belirtilen aralıklarda, İTÜ'nün çeşitli sitelerinden ders planlarını ve programlarını okur ve buraya _commit_'ler. Daha sonra, `assets/js` dosyasında bulunan javascript scriptleri ile veya manuel olarak bu datalara erişilebilirsiniz.
+_Github Actions_ kullanarak **Veri Yenileme Aralıkları** kısmında belirtilen aralıklarda, İTÜ'nün çeşitli sitelerinden ders planlarını ve programlarını okur ve [itu-helper/data](https://github.com/itu-helper/data) _repo_'suna _commit_'ler. Daha sonra, `assets/js` dosyasında bulunan javascript scriptleri ile veya manuel olarak bu datalara erişilebilirsiniz.
 
 ## **Veri Yenileme Aralıkları**
 
@@ -55,7 +55,7 @@ _Github Actions_ kullanarak **Veri Yenileme Aralıkları** kısmında belirtilen
 
 ## **Nasıl Kullanılır?**
 
-### **Verileri itu_helper.js ile Okumak (Javascript için)**
+### **1. Yöntem: Verileri itu_helper.js ile Okumak**
 
 Öncelikle `<body>` _tag_'inin alt kısmına şu satırları yazarak scriptleri importlamanız lazım.
 
@@ -91,7 +91,7 @@ var courses = ituHelper.courses;
 var semesters = ituHelper.semesters;
 ```
 
-### **Verileri Manuel Okumak**
+### **2. Yöntem: Verileri Manuel Okumak**
 
 Aşağıdaki linkerden verilere erişebilir ve bu verileri kendiniz işleyebilirsiniz.
 
@@ -107,7 +107,7 @@ Aşağıdaki linkerden verilere erişebilir ve bu verileri kendiniz işleyebilir
 
 #### **Python Örneği**
 
-Aşağıdaki kodda requests library'si ile CRN ile dersin [bu sayfadaki](https://www.sis.itu.edu.tr/TR/ogrenci/ders-programi/ders-programi.php?seviye=LS) satırına 6 satırda erişme gösterilmiştir.
+Aşağıdaki kodda _requests_ modülüyle; CRN kullanarak, dersin [bu sayfadaki](https://obs.itu.edu.tr/public/DersProgram) verilerine sadece 6 satırla erişim gösterilmiştir.
 
 ```python
 from requests import get
