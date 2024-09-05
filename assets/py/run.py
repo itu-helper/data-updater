@@ -153,12 +153,11 @@ def save_course_rows(rows):
 def save_course_plans(faculty_course_plans, faculty_order):
     # faculties dictionary is structure example:
 
-    # faculties['İTÜ Kuzey Kıbrıs']['Deniz Ulaştırma İşletme Mühendisliği']
-    # ['2014-2015 Güz ile 2015-2016 Güz Dönemleri Arası'] = [
-    #     ['COM 101', 'PHE 101', ...],
-    #     ['MST 102', 'NTH 102', ...],
-    #     ['MST 221', 'MST 201', ..., {'Selective': ['HSS 201', 'MST 261', ...]},
-    #     ....
+    # faculties['İTÜ Kuzey Kıbrıs']['Deniz Ulaştırma İşletme Mühendisliği']['2014-2015 Güz ile 2015-2016 Güz Dönemleri Arası'] = [
+    #        ['COM 101', 'PHE 101', ...],
+    #        ['MST 102', 'NTH 102', ...],
+    #        ['MST 221', 'MST 201', ..., {'Selective': ['HSS 201', 'MST 261', ...]}, ... ]
+    #   ]
 
     # Generate Lines
     lines = []
@@ -170,7 +169,9 @@ def save_course_plans(faculty_course_plans, faculty_order):
             lines.append(f"## {faculty_plan}\n")
             for faculty_plan_iter in faculty_course_plans[faculty][faculty_plan]:
                 lines.append(f"### {faculty_plan_iter}\n")
-                for i, semester in enumerate(faculty_course_plans[faculty][faculty_plan][faculty_plan_iter]):
+
+                semesters = faculty_course_plans[faculty][faculty_plan][faculty_plan_iter]
+                for i, semester in enumerate(semesters):
                     line = ""
                     for j, course in enumerate(semester):
                         if type(course) is dict:
@@ -190,6 +191,8 @@ def save_course_plans(faculty_course_plans, faculty_order):
                             line += "="
 
                     lines.append(line + "\n")
+                if len(semesters) < 8:
+                    lines.append("\n" * (8 - len(semesters)))
 
     # Save lines.
     with open(f"../../{COURSE_PLANS_FILE_NAME}.txt", "w", encoding="utf-8") as f:
