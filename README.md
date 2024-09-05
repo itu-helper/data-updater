@@ -5,7 +5,7 @@
 ![GitHub Workflow Status](https://img.shields.io/github/actions/workflow/status/itu-helper/data-updater/refresh_misc.yml?label=Refreshing%20Misc&logo=docusign&style=flat-square)
 ![GitHub repo size](https://img.shields.io/github/repo-size/itu-helper/data-updater?label=Repository%20Size&logo=github&style=flat-square)
 ![GitHub](https://img.shields.io/github/license/itu-helper/data-updater?label=License&style=flat-square)
-![GitHub issues](https://img.shields.io/github/issues-raw/itu-helper/data-updater?label=License&style=flat-square)
+![GitHub issues](https://img.shields.io/github/issues-raw/itu-helper/data-updater?label=Issues&style=flat-square)
 
 # **ITU Helper**
 
