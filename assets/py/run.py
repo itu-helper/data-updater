@@ -10,9 +10,9 @@ from course_plan_scraper import CoursePlanScraper
 from logger import Logger
 
 LESSONS_URL = "https://obs.itu.edu.tr/public/DersProgram"
-COURSES_URL = "https://www.sis.itu.edu.tr/TR/ogrenci/lisans/onsartlar/onsartlar.php"
+COURSES_URL = "https://obs.itu.edu.tr/public/GenelTanimlamalar/DersOnsartList"
 SNT_COURSES_URL = "https://sanat.itu.edu.tr/dersler/snt-kodlu-dersler"
-COURSE_PLANS_URL = "https://www.sis.itu.edu.tr/TR/ogrenci/lisans/ders-planlari/ders-planlari.php?fakulte="
+COURSE_PLANS_URL = "https://obs.itu.edu.tr/public/DersPlan/"
 BUILDING_CODES_URL = "https://www.sis.itu.edu.tr/TR/obs-hakkinda/bina-kodlari.php"
 PROGRAMME_CODES_URL = "https://www.sis.itu.edu.tr/TR/obs-hakkinda/lisans-program-kodlari.php"
 
@@ -151,7 +151,7 @@ def save_course_rows(rows):
 
 
 def save_course_plans(faculty_course_plans, faculty_order):
-    # faculties dictionary is structure example:
+    # faculty_course_plans dictionary is structure example:
 
     # faculties['İTÜ Kuzey Kıbrıs']['Deniz Ulaştırma İşletme Mühendisliği']['2014-2015 Güz ile 2015-2016 Güz Dönemleri Arası'] = [
     #        ['COM 101', 'PHE 101', ...],
