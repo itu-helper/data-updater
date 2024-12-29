@@ -150,7 +150,7 @@ def save_course_rows(rows):
         f.writelines(lines + lines_to_secure)
 
 
-def save_course_plans(faculty_course_plans, faculty_order):
+def save_course_plans(faculty_course_plans):
     # faculty_course_plans dictionary is structure example:
 
     # faculties['İTÜ Kuzey Kıbrıs']['Deniz Ulaştırma İşletme Mühendisliği']['2014-2015 Güz ile 2015-2016 Güz Dönemleri Arası'] = [
@@ -161,7 +161,7 @@ def save_course_plans(faculty_course_plans, faculty_order):
 
     # Generate Lines
     lines = []
-    faculties_tqdm = tqdm(faculty_order)
+    faculties_tqdm = tqdm(faculty_course_plans.keys())
     for faculty in faculties_tqdm:
         faculties_tqdm.set_description(f"Saving Course Plans of \"{faculty}\"")
         lines.append(f"# {faculty}\n")
@@ -238,8 +238,8 @@ if __name__ == "__main__":
 
         # Scrap and save the courses.
         course_plan_scraper = CoursePlanScraper(driver)
-        faculty_course_plans, faculty_order = course_plan_scraper.scrap_course_plans()
-        save_course_plans(faculty_course_plans, faculty_order)
+        faculty_course_plans = course_plan_scraper.scrap_course_plans()
+        save_course_plans(faculty_course_plans)
 
     elif args.scrap_target == "misc":
         misc_scraper = MiscScraper(BUILDING_CODES_URL, PROGRAMME_CODES_URL)

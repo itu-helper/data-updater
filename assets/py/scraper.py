@@ -23,8 +23,7 @@ class Scraper:
     def is_element_stale(self, element) -> bool:
         try:
             # Attempt to access a property of the element
-            element.is_displayed()  # You could also use `element.tag_name` or similar
-            return False  # Element is not stale
+            return element.is_displayed() and element.is_enabled()
         except StaleElementReferenceException:
             return True  # Element is stale
 
