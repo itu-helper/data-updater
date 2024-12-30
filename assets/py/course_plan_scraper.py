@@ -30,6 +30,7 @@ ALLOWED_PROGRAM_TYPES = [
 
 class CoursePlanScraper(Scraper):
     MAX_FACULTY_THREADS = 8
+    DEFAULT_ITERATION_NAME = "Tüm Öğrenciler İçin"
 
     def __init__(self, driver) -> None:
         super().__init__(driver)
@@ -178,7 +179,6 @@ class CoursePlanScraper(Scraper):
         # Read the program types, if it's empty, stop fetching.
         program_types = self.create_dropdown_and_get_elements(self.get_program_type_dropdown_options, faculty, driver=driver)
         if program_types is None:
-            driver.quit()
             return
 
         if faculty_name not in self.faculty_course_plans.keys():
@@ -197,40 +197,14 @@ class CoursePlanScraper(Scraper):
                 # Logger.log_info(f"{log_prefix} Skipping the program type: [blue]{faculty_name}[/blue] [cyan]\"{program_type_name}\"[/cyan]. Programs empty")
                 continue
 
-            try:
-                pairs_top = self.get_attribute_element_pairs(programs, "innerHTML")
-                x, _ = pairs[0]
-                x.click() 
-            except Exception as e:
-                programs = self.create_dropdown_and_get_elements(self.get_program_dropdown_options, program_type, driver=driver)
-                if programs is None:
-                    continue
-
-                Logger.log_warning(f"{log_prefix} Error when adding [blue]\"{faculty_name}\"[/blue]/[cyan]\"{program_type_name}\"[/cyan]. Tried fixing by updating program names")
-                pairs_top = self.get_attribute_element_pairs(programs, "innerHTML")
-
-            for program, program_name in pairs_top:
+            for program, program_name in self.get_attribute_element_pairs(programs, "innerHTML"):
                 # Read the plan types, if it's empty, skip the program.
                 plan_types = self.create_dropdown_and_get_elements(self.get_plan_type_dropdown_options, program, driver=driver)
                 if plan_types is None:
                     # Logger.log_info(f"{log_prefix} Skipping the program type: [blue]{faculty_name}[/blue] [cyan]\"{program_name}\"[/cyan]. Plan Types empty")
                     continue
 
-                try:
-                    pairs = self.get_attribute_element_pairs(plan_types, "value")
-                    x, _ = pairs[0]
-                    x.click()
-                except Exception as e:
-                    # Read the plan types, if it's empty, skip the program.
-                    plan_types = self.create_dropdown_and_get_elements(self.get_plan_type_dropdown_options, program, driver=driver)
-                    if plan_types is None:
-                        continue
-
-                    Logger.log_warning(f"{log_prefix} Error when adding [blue]\"{faculty_name}\"[/blue]/[cyan]\"{program_name}\"[/cyan]. Tried fixing by updating plan types")
-                    pairs = self.get_attribute_element_pairs(plan_types, "value")
-
-
-                for program_type, program_type_value in pairs:
+                for program_type, program_type_value in self.get_attribute_element_pairs(plan_types, "value"):
                     # Make sure the plan type is allowed.
                     if program_type_value not in ALLOWED_PROGRAM_TYPE_VALS: continue
 
@@ -248,18 +222,15 @@ class CoursePlanScraper(Scraper):
         
         Logger.log_info(f"{log_prefix} Finished Scraping The Faculty: [blue]\"{faculty_name}\"[/blue]")
 
-    def create_dropdown_and_get_elements(self, dropdown_read_func, dropdown_generation_element, max_retries: int=3, driver=None):
+    def create_dropdown_and_get_elements(self, dropdown_read_func, dropdown_generation_element, max_retries: int=10, driver=None):
         for _ in range(max_retries):
             dropdown_generation_element.click()
-            dropdown_vals = dropdown_read_func(driver)
-            if dropdown_vals is None:
-                return None
-
-            # If there are no stale elements in the dropdown values, break the loop.
-            if True not in [self.is_element_stale(e) for e in dropdown_vals]:
-                break
-
             self.wait()
+            dropdown_vals = dropdown_read_func(driver)
+
+            # If the dropdown values exist and there are no stale elements in the dropdown values, return the values
+            if dropdown_vals is not None and True not in [self.is_element_stale(e) for e in dropdown_vals]:
+                return dropdown_vals
 
         return dropdown_vals
 
@@ -317,12 +288,19 @@ class CoursePlanScraper(Scraper):
             for program_type_name, program in faculty_course_plans[faculty].items():
                 for program_name, program_content in program.items():
                     trimmed_program_name, iteration = get_iteration_from_program_name(program_name)
-                    if trimmed_program_name is None:
-                        Logger.log_warning(f"Failed to parse the program name and maybe iteration from: {program_name}")
+                    
+                    # If both the program name and iteration are None, the program name might not contain an iteration
+                    # For example, "Peyzaj Mimarlığı Lisans Programı" has no iteration names, as it has a single iteration.
+                    # https://obs.itu.edu.tr/public/DersPlan/DersPlanDetay/194
+                    if trimmed_program_name is None and iteration is None:
+                        trimmed_program_name = program_name
+                        iteration = self.DEFAULT_ITERATION_NAME
+                    elif trimmed_program_name is None:
+                        Logger.log_warning(f"Failed to parse the program name from: {program_name}, skipping it.")
                         continue
-                    if iteration is None:
-                        Logger.log_warning(f"Failed to parse the iteration from: {program_name}, iteration will be set to 'Hepsi'")
-                        iteration = "Hepsi"
+                    elif iteration is None:
+                        Logger.log_warning(f"Failed to parse the iteration from: {program_name}, iteration will be set to {self.DEFAULT_ITERATION_NAME}")
+                        iteration = self.DEFAULT_ITERATION_NAME
 
                     program_name_with_type = f"{trimmed_program_name} ({program_type_name})"
                     if program_name_with_type not in formatted_dict[faculty].keys():
@@ -333,7 +311,7 @@ class CoursePlanScraper(Scraper):
         return formatted_dict
 
     def scrap_course_plan_thread_routine(self, thread_no: int):
-        thread_prefix = f"[royal_blue1][Thread {thread_no}][/royal_blue1]"
+        thread_prefix = f"[royal_blue1][Thread {str(thread_no).zfill(2)}][/royal_blue1]"
         Logger.log(f"{thread_prefix} Starting thread.")
 
         thread_driver = DriverManager.create_driver()

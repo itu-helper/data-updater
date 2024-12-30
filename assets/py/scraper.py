@@ -22,8 +22,8 @@ class Scraper:
 
     def is_element_stale(self, element) -> bool:
         try:
-            # Attempt to access a property of the element
-            return element.is_displayed() and element.is_enabled()
+            attr = element.get_attribute("innerHTML")  # Attempt to access a property of the element
+            return not (element.is_displayed() and attr is not None)
         except StaleElementReferenceException:
             return True  # Element is stale
 
