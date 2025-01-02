@@ -32,7 +32,7 @@ _ITU Helper_'a [_bu adresten_](https://itu-helper.github.io/home/) ulaşabilirsi
 
 ## **Ne İşe Yarar?**
 
-_Github Actions_ kullanarak **Veri Yenileme Aralıkları** kısmında belirtilen aralıklarda, İTÜ'nün çeşitli sitelerinden ders planlarını ve programlarını okur ve [itu-helper/data](https://github.com/itu-helper/data) _repo_'suna _commit_'ler. Daha sonra, `assets/js` dosyasında bulunan javascript scriptleri ile veya manuel olarak bu datalara erişilebilirsiniz.
+_Github Actions_ kullanarak **Veri Yenileme Aralıkları** kısmında belirtilen aralıklarda, İTÜ'nün çeşitli sitelerinden ders planlarını ve programlarını okur ve [itu-helper/data](https://github.com/itu-helper/data) _repo_'suna _commit_ eder. Daha sonra, [itu-helper/sdk](https://github.com/itu-helper/sdk) _repo_'suyla veya manuel olarak bu datalara erişilebilirsiniz.
 
 ## **Veri Yenileme Aralıkları**
 
@@ -57,73 +57,4 @@ _Github Actions_ kullanarak **Veri Yenileme Aralıkları** kısmında belirtilen
 
 ## **Nasıl Kullanılır?**
 
-### **1. Yöntem: Verileri itu_helper.js ile Okumak**
-
-Öncelikle `<body>` _tag_'inin alt kısmına şu satırları yazarak scriptleri importlamanız lazım.
-
-```html
-<script src="https://cdn.jsdelivr.net/gh/itu-helper/data-updater@master/assets/js/lesson.js"></script>
-<script src="https://cdn.jsdelivr.net/gh/itu-helper/data-updater@master/assets/js/course.js"></script>
-<script src="https://cdn.jsdelivr.net/gh/itu-helper/data-updater@master/assets/js/course_group.js"></script>
-<script src="https://cdn.jsdelivr.net/gh/itu-helper/data-updater@master/assets/js/itu_helper.js"></script>
-```
-
-Daha sonra verilere erişmek için bir `ITUHelper` nesnesi oluşturmanız ve verileri okumanız lazım.
-
-```javascript
-// Verileri tutacak nesneyi oluştur.
-var ituHelper = new ITUHelper();
-
-// Verileri oku.
-ituHelper.fetchData();
-```
-
-> :warning: `ituHelper`'dan verilere erişmeye ilk çalıştığınızda, verilere erişildiğinde `ituHelper.onFetchComplete` fonksiyonu çalışıtırılacak, bu fonksiyonun varsayılan değeri `() => {}` şekildedir, sitenizde donma vs. gibi durumları önlemek için bu fonksiyonu kullanabilirsiniz.
-
-Verileri okuduktan sonra aşağıdaki şekildeki gibi istediğiniz verilere erişebilirsiniz
-
-```javascript
-// courses içinde bütün Course'ları barındıran bir
-var courses = ituHelper.courses;
-
-// semesters bir dictionary, ders planına erişmek istediğiniz dersi
-// semesters["fakülte"]["program"]["iterasyon"] şekilde seçerek
-// 8 elemanlı bir semester array'i alabilirsiniz. Semester array'inin
-// her bir elemanı da bir Course arrayi.
-var semesters = ituHelper.semesters;
-```
-
-### **2. Yöntem: Verileri Manuel Okumak**
-
-Aşağıdaki linkerden verilere erişebilir ve bu verileri kendiniz işleyebilirsiniz.
-
-`lesson_rows.txt`: https://raw.githubusercontent.com/itu-helper/data/main/lesson_rows.txt
-
-`course_rows.txt`: https://raw.githubusercontent.com/itu-helper/data/main/course_rows.txt
-
-`course_plans.txt`: https://raw.githubusercontent.com/itu-helper/data/main/course_plans.txt
-
-`building_codes.txt`: https://raw.githubusercontent.com/itu-helper/data/main/building_codes.txt
-
-`programme_codes.txt`: https://raw.githubusercontent.com/itu-helper/data/main/programme_codes.txt
-
-#### **Python Örneği**
-
-Aşağıdaki kodda _requests_ modülüyle; CRN kullanarak, dersin [bu sayfadaki](https://obs.itu.edu.tr/public/DersProgram) verilerine sadece 6 satırla erişim gösterilmiştir.
-
-```python
-from requests import get
-
-URL = "https://raw.githubusercontent.com/itu-helper/data/main/lesson_rows.txt"
-
-page = get(URL)
-# page.text bize her satırı, table elementleri "|" ile, table rowları ise "\n" ile ayrılmış bir şekilde returnler.
-lines = page.text.split("\n")
-
-# Her satırı "|" ile ayırarak tablodaki elemanlara erişiyoruz ve CRN'yi dictionary'nin key'i olacak şekilde dictionary compherension yapıyoruz.
-crn_to_lesson_line = {lesson.split("|")[0] : lesson for lesson in lines}
-
-print(crn_to_lesson_line["21516"])
-# OUTPUT
-# 21516|BLG 102E||Ayşe  Tosun, Ali  Çakmak|EEBEEB|Salı Perşembe |0830/1129 1530/1729 |5102 6307 |110|85|BLG, BLGE, CEN
-```
+Verilerden yararlanırken izleyebileceğiniz iki ana yol bulunmakta. İlk olarak, önerdiğimiz yöntem olan [itu-helper/sdk](https://github.com/itu-helper/sdk) _repo_'sunda bulunan SDK'mizden yararlanmanız. Diğer yöntem ise, verileri _HTTP request_ ile okumak. Bu yöntemin dezavantajı, okuduğunuz dosyalardan bağlantıları kendiniz oluşturmanız gerekmesi. Daha detaylı bilgi için, [itu-helper/sdk](https://github.com/itu-helper/sdk)'nin [HTTP request](https://github.com/itu-helper/sdk?tab=readme-ov-file#http-request) bölümüne bakabilirsiniz.

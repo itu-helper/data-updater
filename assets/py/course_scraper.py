@@ -95,7 +95,7 @@ class CourseScraper(Scraper):
                 self.courses.append(table_content)
 
                 if len(self.courses) % log_interval_modulo == 0:
-                    Logger.log_info(f"{thread_prefix} Scraped {len(self.courses)} courses.")
+                    Logger.log_info(f"Scraped {len(self.courses)} courses in total.")
             else:
                 Logger.log_error(f"{thread_prefix} Could not scrap {name} {number}, timed out while waiting for the table to load.")
 
@@ -121,7 +121,6 @@ class CourseScraper(Scraper):
 
     def scrap_courses(self):
         Logger.log_info("====== Scraping All Courses ======")
-        self.webdriver.minimize_window()  # Not really necessary but makes testing a lot easier.
 
         self.courses = []
         Logger.log_info("Finding course codes to scrap.")
