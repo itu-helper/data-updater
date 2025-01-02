@@ -1,17 +1,13 @@
 from bs4 import BeautifulSoup
 from requests import get
+from constants import *
 
 
 class MiscScraper:
-
-    def __init__(self, building_codes_url, programme_codes_url) -> None:
-        self.building_codes_url = building_codes_url
-        self.programme_codes_url = programme_codes_url
-
     def scrap_data(self):
         return (
-            self.scrap_building_codes(self.building_codes_url),
-            self.scrap_programme_codes(self.programme_codes_url),
+            self.scrap_building_codes(BUILDING_CODES_URL),
+            self.scrap_programme_codes(PROGRAMME_CODES_URL),
         )
 
     def scrap_building_codes(self, url):

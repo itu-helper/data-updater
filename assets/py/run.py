@@ -8,22 +8,7 @@ from lesson_scraper import LessonScraper
 from misc_scraper import MiscScraper
 from course_plan_scraper import CoursePlanScraper
 from logger import Logger
-
-LESSONS_URL = "https://obs.itu.edu.tr/public/DersProgram"
-COURSES_URL = "https://obs.itu.edu.tr/public/GenelTanimlamalar/DersOnsartList"
-SNT_COURSES_URL = "https://sanat.itu.edu.tr/dersler/snt-kodlu-dersler"
-COURSE_PLANS_URL = "https://obs.itu.edu.tr/public/DersPlan/"
-BUILDING_CODES_URL = "https://www.sis.itu.edu.tr/TR/obs-hakkinda/bina-kodlari.php"
-PROGRAMME_CODES_URL = "https://www.sis.itu.edu.tr/TR/obs-hakkinda/lisans-program-kodlari.php"
-
-LESSONS_FILE_NAME = "data/lesson_rows"
-COURSE_FILE_NAME = "data/course_rows"
-COURSE_PLANS_FILE_NAME = "data/course_plans"
-BUILDING_CODES_FILE_NAME = "data/building_codes"
-PROGRAMME_CODES_FILE_NAME = "data/programme_codes"
-
-COURSE_ROWS_WARNING_LINE = "# FOLLOWING LINES WHERE ADDED FOR THE MISSING LESSONS. \n"
-
+from constants import *
 
 def extract_from_a(a):
     if ">" not in a:
@@ -60,94 +45,18 @@ def save_lesson_rows(rows):
     # Save each row to a different line.
     lines = [process_lesson_row(row) + "\n" for row in rows]
     lines.sort()
-    with open(f"../../{LESSONS_FILE_NAME}.txt", "w", encoding="utf-8") as f:
+    with open(f"../../{LESSONS_FILE_NAME}", "w", encoding="utf-8") as f:
         f.writelines(lines)
-
-    # If some a lesson has no coresponding course in the course_rows.txt file.
-    # append them to that file.
-
-    # Get the current course lines.
-    with open(f"../../{COURSE_FILE_NAME}.txt", "r", encoding="utf-8") as f:
-        current_course_lines_list = f.readlines()
-        current_course_lines = f.read()
-
-    lines_to_add = []
-    course_codes_added = ""
-    for row in rows:
-        data = split_lesson_row(row)
-        course_code = extract_from_a(data[1])
-        if course_code not in current_course_lines + course_codes_added:
-            line = course_code + "|"  # Course Code
-            line += data[2] + "|"  # Course Name
-            line += data[13] + "|"  # Course Rest.
-            line += extract_from_a(data[12])  # Major Rest.
-
-            lines_to_add.append(line + "\n")
-            course_codes_added += course_code + " "
-
-    if COURSE_ROWS_WARNING_LINE not in current_course_lines:
-        lines_to_add.insert(0, COURSE_ROWS_WARNING_LINE)
-
-    with open(f"../../{COURSE_FILE_NAME}.txt", "w", encoding="utf-8") as f:
-        desired_lines = current_course_lines_list + lines_to_add
-        lines_to_save = []
-        course_codes = []
-        for line in desired_lines:
-            if "#" in line:
-                course_code = lines_to_save
-            else:
-                course_code = line.split("|")[0]
-
-            if course_code not in course_codes:
-                lines_to_save.append(line)
-                course_codes.append(course_code)
-
-        f.writelines(lines_to_save)
-
-
-def process_course_row(row):
-    data = row.replace("<tr>", "").replace(
-        "</tr>", "").replace("</td>", "").replace(
-            "<br>", "").replace("</br>", "").replace(
-                '<font color="#FF0000">', "").replace("</font>", "").split("<td>")[1:]
-
-    processed_row = extract_from_a(data[0]) + "|"  # Course Code
-    processed_row += data[1] + "|"  # Course Title
-    processed_row += data[2] + "|"  # Requirements
-    processed_row += data[3]  # Class Restrictions
-
-    return processed_row
 
 
 def save_course_rows(rows):
     Logger.log_info("Saving Course Rows...")
 
     # Save each row to a different line.
-    lines = [process_course_row(row) + "\n" for row in rows]
-    lines.sort()
+    lines = [f"{row}\n" for row in sorted(rows)]
 
-    lines_to_secure = []
-    try:
-        with open(f"../../{COURSE_FILE_NAME}.txt", "r", encoding="utf-8") as f:
-            already_saved_lines = f.readlines()
-            for i, line in enumerate(already_saved_lines):
-                if line == COURSE_ROWS_WARNING_LINE:
-                    lines_to_secure = already_saved_lines[i:]
-                    break
-    except Exception:
-        pass
-
-    lines_to_secure_to_remove = []
-    for line_to_secure in lines_to_secure:
-        for line in lines:
-            if line.split("|")[0] == line_to_secure.split("|")[0]:
-                lines_to_secure_to_remove.append(line_to_secure)
-
-    for r in lines_to_secure_to_remove:
-        lines_to_secure.remove(r)
-
-    with open(f"../../{COURSE_FILE_NAME}.txt", "w", encoding="utf-8") as f:
-        f.writelines(lines + lines_to_secure)
+    with open(f"../../{COURSES_FILE_NAME}", "w", encoding="utf-8") as f:
+        f.writelines(lines)
 
 
 def save_course_plans(faculty_course_plans):
@@ -195,71 +104,50 @@ def save_course_plans(faculty_course_plans):
                     lines.append("\n" * (8 - len(semesters)))
 
     # Save lines.
-    with open(f"../../{COURSE_PLANS_FILE_NAME}.txt", "w", encoding="utf-8") as f:
+    with open(f"../../{COURSE_PLANS_FILE_NAME}", "w", encoding="utf-8") as f:
         f.writelines(lines)
 
 
 def save_misc_data(data):
     # BUILDING DATA
-    with open(f"../../{BUILDING_CODES_FILE_NAME}.txt", "w", encoding="utf-8") as f:
+    with open(f"../../{BUILDING_CODES_FILE_NAME}", "w", encoding="utf-8") as f:
         f.writelines(data[0])
 
     # PROGRAMME DATA
-    with open(f"../../{PROGRAMME_CODES_FILE_NAME}.txt", "w", encoding="utf-8") as f:
+    with open(f"../../{PROGRAMME_CODES_FILE_NAME}", "w", encoding="utf-8") as f:
         f.writelines(data[1])
 
 
 parser = argparse.ArgumentParser(description="Scraps data from ITU's website.")
 parser.add_argument('-scrap_target', type=str,
-                    help="options: [lesson, course]")
+                    help="options: [lesson, course, course_plan, misc]")
 
 if __name__ == "__main__":
     args = parser.parse_args()
     t0 = perf_counter()
+    driver = None
 
-    # Create the driver.
-    driver = DriverManager.create_driver()
-
+    # Scrap Courses
     if args.scrap_target == "course":
-        # Open the site, then wait for it to be loaded.
-        driver.get(COURSES_URL)
-        sleep(3)
-
-        # Scrap and save the courses.
-        course_scraper = CourseScraper(driver, SNT_COURSES_URL)
-        course_rows = course_scraper.scrap_tables()
+        course_rows = CourseScraper(None).scrap_courses()
         save_course_rows(course_rows)
-
-        print("")
-
-        # Open the site, then wait for it to be loaded.
-        driver.get(COURSE_PLANS_URL)
-        sleep(3)
-
-        # Scrap and save the courses.
-        course_plan_scraper = CoursePlanScraper(driver)
-        faculty_course_plans = course_plan_scraper.scrap_course_plans()
+    # Scrap Course Plans
+    elif args.scrap_target == "course_plan":
+        driver = DriverManager.create_driver()
+        faculty_course_plans = CoursePlanScraper(driver).scrap_course_plans()
         save_course_plans(faculty_course_plans)
-
+    # Scrap Building Codes and Programme Codes
     elif args.scrap_target == "misc":
-        misc_scraper = MiscScraper(BUILDING_CODES_URL, PROGRAMME_CODES_URL)
-
-        data = misc_scraper.scrap_data()
-
+        data = MiscScraper().scrap_data()
         save_misc_data(data)
-
+    # Scrap Lessons
     elif args.scrap_target == "lesson":
-        # Open the site, then wait for it to be loaded.
-        driver.get(LESSONS_URL)
-        sleep(3)
-
-        # Scrap and save the courses.
-        lesson_scraper = LessonScraper(driver)
-        Logger.log_info("Scraping All Available Lessons")
-        lesson_rows = lesson_scraper.scrap_tables()
+        driver = DriverManager.create_driver()
+        lesson_rows = LessonScraper(driver).scrap_tables()
         save_lesson_rows(lesson_rows)
 
-    DriverManager.kill_driver(driver)
+    if driver is not None:
+        DriverManager.kill_driver(driver)
 
     t1 = perf_counter()
     Logger.log_info(f"Scraping & Saving Completed in [green]{round(t1 - t0, 2)}[/green] seconds")

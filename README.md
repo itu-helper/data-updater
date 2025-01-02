@@ -37,9 +37,11 @@ _Github Actions_ kullanarak **Veri Yenileme Aralıkları** kısmında belirtilen
 ## **Veri Yenileme Aralıkları**
 
 -   **(00:04 - 02:49) 15dk da bir**: _Lesson_'lar güncellenir.
--   **(02:55)**: Bina kodları ve program kodları güncellenir.
--   **(03:00)**: _Course_'lar ve Ders Planları güncellenir.
--   **(04:04 - 23:49) 15dk da bir**: _Lesson_'lar güncellenir.
+-   **(02:55)**: Bina ve program kodları güncellenir.
+-   **(03:00)**:
+    -   **Pazartesileri**: _Course_'lar güncellenir.
+    -  **Salıları**: Ders Planları güncellenir.
+-   **(05:04 - 23:49) 15dk da bir**: _Lesson_'lar güncellenir.
 
 > 🛈 _Lesson_'ların daha sık güncellenmesinin nedeni kontenjan verilerinin güncel tutulmasının gerekmesidir. _Course_'ların ve Ders Planlarının güncellendiği sırada _Lesson_'ların güncellenememsi _Github Actions_'da kullandığımız _Git Auto Commit_'in repo'da değişiklik olması durumda commit atamamasındandır.
 

@@ -30,6 +30,36 @@ class Scraper:
     def get_attribute_element_pairs(self, elements: list, attribute: str) -> list[tuple]:
         return zip(elements, [e.get_attribute(attribute) for e in elements])
 
+    def load_page(self, url: str, wait_dur: float=3):
+        self.webdriver.get(url)
+        sleep(wait_dur)
+
+    def switch_to_turkish(self, driver=None, log_prefix: str=""):
+        if driver is None:
+            driver = self.webdriver
+
+        lang_button = driver.find_element(By.CSS_SELECTOR, 'a.menu-lang')
+        if "TÜRKÇE" in lang_button.get_attribute("innerHTML"):
+            Logger.log_info(f"{log_prefix + ' ' if len(log_prefix) > 0 else ''}Switching to Turkish")
+            lang_button.click()
+            self.wait()
+
+    def is_at_bottom(self, driver=None):
+        if driver is None:
+            driver = self.webdriver
+
+        current_scroll_position = driver.execute_script("return window.scrollY;")
+        total_height = driver.execute_script("return document.body.scrollHeight;")
+        visible_height = driver.execute_script("return window.innerHeight;")
+
+        return current_scroll_position + visible_height >= total_height
+
+    def scroll_to_bottom(self, driver=None):
+        if driver is None:
+            driver = self.webdriver
+
+        driver.execute_script("window.scrollTo({top: document.body.scrollHeight, behavior: 'smooth'});")
+
     def get_soup_from_url(self, url):
         try:
             # Retry strategy
@@ -59,8 +89,11 @@ class Scraper:
     def find_elements_by_class(self, class_name: str) -> list:
         return self.webdriver.find_elements(By.CLASS_NAME, class_name)
     
-    def find_elements_by_css_selector(self, css_selector: str) -> list:
-        return self.webdriver.find_elements(By.CSS_SELECTOR, css_selector)
+    def find_elements_by_css_selector(self, css_selector: str, driver=None) -> list:
+        if driver is None:
+            driver = self.webdriver
+        
+        return driver.find_elements(By.CSS_SELECTOR, css_selector)
 
     def find_elements_by_tag(self, tag_name: str) -> list:
         return self.webdriver.find_elements(By.TAG_NAME, tag_name)

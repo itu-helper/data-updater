@@ -1,14 +1,14 @@
-name: Refresh Misc
+name: Refresh Courses
 
 on:
   schedule:
-    # At 23:55.
-    - cron: "55 23 * * *"
+    # At 00:00 on Monday.
+    - cron: "0 0 * * 1"
 
   workflow_dispatch:
 
 jobs:
-  refresh_misc:
+  refresh_courses_and_course_plans:
     runs-on: ubuntu-latest
 
     steps:
@@ -43,26 +43,15 @@ jobs:
       - name: Python Run
         run: |
           cd assets/py
-          python run.py -scrap_target misc
+          python run.py -scrap_target course
 
       # Commits the changes back to the data repo
-      - name: Push building_codes.txt to Data
+      - name: Push course_rows.txt to Data
         uses: dmnemec/copy_file_to_another_repo_action@main
         env:
           API_TOKEN_GITHUB: ${{ secrets.API_TOKEN_GITHUB }}
         with:
-          source_file: './data/building_codes.psv'
-          destination_repo: 'itu-helper/data'
-          user_email: 'data-updater@itu-helper.com'
-          user_name: 'ITU Helper'
-
-      # Commits the changes back to the data repo
-      - name: Push programme_codes.txt to Data
-        uses: dmnemec/copy_file_to_another_repo_action@main
-        env:
-          API_TOKEN_GITHUB: ${{ secrets.API_TOKEN_GITHUB }}
-        with:
-          source_file: './data/programme_codes.psv'
+          source_file: './data/courses.psv'
           destination_repo: 'itu-helper/data'
           user_email: 'data-updater@itu-helper.com'
           user_name: 'ITU Helper'

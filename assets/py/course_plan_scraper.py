@@ -8,6 +8,7 @@ from time import perf_counter
 from selenium.webdriver.common.by import By
 from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
+from constants import *
 
 COURSE_PLANS_URL = "https://obs.itu.edu.tr/public/DersPlan/"
 ALLOWED_PROGRAM_TYPE_VALS = [
@@ -29,7 +30,6 @@ ALLOWED_PROGRAM_TYPES = [
 ]
 
 class CoursePlanScraper(Scraper):
-    MAX_FACULTY_THREADS = 8
     DEFAULT_ITERATION_NAME = "Tüm Öğrenciler İçin"
 
     def __init__(self, driver) -> None:
@@ -37,6 +37,8 @@ class CoursePlanScraper(Scraper):
         self.faculty_course_plans = dict()
         self.faculties = []
         self.completed_faculty_count = 0
+
+        self.load_page(COURSE_PLANS_URL)
 
     def scrape_iteration_course_plan(self, url):
         soup = self.get_soup_from_url(url)  # Read the page.
@@ -69,9 +71,9 @@ class CoursePlanScraper(Scraper):
 
                         # First row is just the header.
                         for selective_row in selective_course_rows[1:]:
-                            selective_courses.append(selective_row.find("a").get_text().strip())
+                            selective_courses.append(selective_row.find("a").get_text().replace("\n", "").strip())
 
-                        semester_program.append({selective_courses_title: selective_courses})
+                        semester_program.append({selective_courses_title.replace("\n", "").strip(): selective_courses})
                     else:
                         # Because ITU changed their website, I have no fucking clue what the "selective courses like below" is
                         # but the new UI might have fixed that issue. I'm leaving this here just in case
@@ -85,16 +87,6 @@ class CoursePlanScraper(Scraper):
             program_list.append(semester_program)
 
         return program_list
-
-    def switch_to_turkish(self, driver=None, log_prefix: str=""):
-        if driver is None:
-            driver = self.webdriver
-
-        lang_button = driver.find_element(By.CSS_SELECTOR, 'a.menu-lang')
-        if "TÜRKÇE" in lang_button.get_attribute("innerHTML"):
-            Logger.log_info(f"{log_prefix + ' ' if len(log_prefix) > 0 else ''}Switching to Turkish")
-            lang_button.click()
-            self.wait()
 
     def scrap_iterations(self, program_name: str, iteration_url: str, log_prefix: str="") -> dict:
         program_iterations = dict()
@@ -345,7 +337,7 @@ class CoursePlanScraper(Scraper):
 
         # Create the threads
         threads = []
-        for i in range(min(self.MAX_FACULTY_THREADS, len(self.faculties))):
+        for i in range(min(MAX_THREAD_COUNT, len(self.faculties))):
             t = threading.Thread(target=self.scrap_course_plan_thread_routine, args=(i,))
             threads.append(t)
         
