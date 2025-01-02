@@ -6,9 +6,14 @@ from selenium.common.exceptions import StaleElementReferenceException
 
 from scraper import Scraper
 from logger import Logger
+from constants import *
 
 
 class LessonScraper(Scraper):
+    def __init__(self, webdriver):
+        super().__init__(webdriver)
+        self.load_page(LESSONS_URL)
+
     def scrap_current_table(self) -> list[str]:
         try:
             rows = self.find_elements_by_tag("tr")

@@ -1,86 +1,142 @@
-from bs4 import BeautifulSoup
+from os import path
+import re
 from selenium.webdriver.common.by import By
-from selenium.webdriver.common.action_chains import ActionChains
-from tqdm import tqdm
-from requests import get
+from selenium.common.exceptions import TimeoutException
+from selenium.webdriver.support.ui import WebDriverWait
+from selenium.webdriver.support import expected_conditions as EC
 from logger import Logger
+from constants import *
+from time import sleep
+import threading
 
 from scraper import Scraper
+from driver_manager import DriverManager
 
 
 class CourseScraper(Scraper):
+    def __init__(self, webdriver):
+        super().__init__(webdriver)
+        self.courses = []
 
-    def __init__(self, driver, snt_courses_url):
-        self.snt_courses_url = snt_courses_url
-        super().__init__(driver)
+    def get_course_codes(self):
+        course_codes = []
 
-    def scrap_current_table(self):
-        rows = self.find_elements_by_tag("tr")
+        # Read the lessons file
+        if path.exists(f"../../{LESSONS_FILE_NAME}"):
+            with open(f"../../{LESSONS_FILE_NAME}", "r") as file:
+                course_codes += [l.split("|")[1] for l in file.readlines() if "|" in l]
 
-        # Filter out the header rows.
-        return [row.get_attribute("outerHTML") for row in rows if row.get_attribute("class") != "table-baslik"]
+        # Read the course plans file
+        if path.exists(f"../../{COURSE_PLANS_FILE_NAME}"):
+            with open(f"../../{COURSE_PLANS_FILE_NAME}", "r") as file:
+                course_rows = [l.replace("\n", "") for l in file.readlines() if l[0] != "#"]
+                for cells in [row.split("=") for row in course_rows]:
+                    for cell in cells:
+                        # If elective course
+                        if "[" in cell:
+                            course_codes += cell.split("*")[-1].replace("(", "").replace(")", "").replace("]", "").split("|")
+                        else:
+                            course_codes.append(cell)
 
-    def scrap_tables(self):
-        def get_submit_button():
-            return self.find_elements_by_class("project__filter")[0].find_elements(By.TAG_NAME, "input")[1]
+        # Read the old courses files
+        if path.exists(f"../../{COURSES_FILE_NAME}"):
+            with open(f"../../{COURSES_FILE_NAME}", "r", encoding="utf-8") as file:
+                course_codes += [l.split("|")[0] for l in file.readlines() if "|" in l]
 
-        def get_dropdown_options():
-            # Expand the dropdown.
-            expand_button = self.find_elements_by_tag("button")[0]
-            if expand_button.get_attribute("aria-expanded") == "false":
-                ActionChains(self.webdriver).move_to_element(
-                    expand_button).click(expand_button).perform()
+        return list(set([c for c in course_codes if len(c) > 0]))  # Remove duplicates and empty strings.
 
-            # First index is the "Select something" option
-            return self.find_elements_by_tag("ul")[14].find_elements(By.TAG_NAME, "li")[1:]
+    def scrap_current_table(self, driver, timeout_dur: float=3.0):
+        output = ""
+        
+        try:
+            all_rows = WebDriverWait(driver, timeout_dur).until(
+                EC.presence_of_all_elements_located((By.CSS_SELECTOR, "tbody tr"))
+            )
+        except TimeoutException:
+            return None
 
-        Logger.log_info("====== Scraping All Courses ======")
-        courses = []
-        option_parent_tqdms = tqdm(range(len(get_dropdown_options())))
-        for i in option_parent_tqdms:
-            dropdown_option = get_dropdown_options()[i]
+        output += self.find_elements_by_css_selector("td", all_rows[2])[0].get_attribute("innerHTML") + "|"  # Course Code
+        output += self.find_elements_by_css_selector("td", all_rows[2])[1].get_attribute("innerHTML") + "|"  # Course Name
+        output += self.find_elements_by_css_selector("td", all_rows[2])[2].get_attribute("innerHTML") + "|"  # Course Language
 
-            course_name = dropdown_option.find_elements(By.TAG_NAME, "span")[
-                0].get_attribute("innerHTML").strip()
+        output += self.find_elements_by_css_selector("td", all_rows[4])[0].get_attribute("innerHTML") + "|"  # Course Credits
+        output += self.find_elements_by_css_selector("td", all_rows[4])[1].get_attribute("innerHTML") + "|"  # Course ECTS
 
-            option_parent_tqdms.set_description(
-                f"Scraping \"{course_name}\" courses")
+        output += self.find_elements_by_css_selector("td", all_rows[6])[1].get_attribute("innerHTML") + "|"  # Course Prerequisites
+        output += self.find_elements_by_css_selector("td", all_rows[7])[1].get_attribute("innerHTML") + "|"  # Major Prerequisites
 
-            self.wait_until_loaded(dropdown_option)
+        output += self.find_elements_by_css_selector("td", all_rows[9])[0].get_attribute("innerHTML").replace("\n", "") # Description
 
-            dropdown_option = dropdown_option.find_element(By.TAG_NAME, "a")
-            ActionChains(self.webdriver).move_to_element(
-                dropdown_option).click(dropdown_option).perform()
+        return re.sub(r'[ \t]+', ' ', re.sub(r'<.*?>', '', output)).strip()  # Remove HTML tags and extra spaces.
 
-            get_submit_button().click()
+    def scrap_courses_thread_routine(self, course_codes: list[str], thread_prefix: str, log_interval_modulo: int=100) -> None:
+        driver = DriverManager.create_driver()
+        driver.get(COURSES_URL)
+        sleep(3)
+
+        self.switch_to_turkish(driver, thread_prefix)
+
+        for name, number in [c.split(" ") for c in course_codes]:
+            course_code_name = self.find_elements_by_css_selector("input[name='subj']", driver)[0]
+            course_code_number = self.find_elements_by_css_selector("input[name='numb']", driver)[0]
+            submit_button = self.find_elements_by_css_selector("input[type='submit']", driver)[0]
+            
+            course_code_name.clear()
+            course_code_name.send_keys(name)
+
+            course_code_number.clear()
+            course_code_number.send_keys(number)
+
+            submit_button.click()
             self.wait()
 
-            courses += self.scrap_current_table()
+            table_content = self.scrap_current_table(driver)
+            if table_content is not None:
+                self.courses.append(table_content)
 
-        Logger.log_info("Scraping Additional Courses from SNT")
+                if len(self.courses) % log_interval_modulo == 0:
+                    Logger.log_info(f"Scraped {len(self.courses)} courses in total.")
+            else:
+                Logger.log_error(f"{thread_prefix} Could not scrap {name} {number}, timed out while waiting for the table to load.")
 
-        r = get(self.snt_courses_url)
-        r.encoding = r.apparent_encoding
-        soup = BeautifulSoup(r.text, "html.parser", from_encoding="utf-8")
-        snt_course_lines = [
-            a.get_text()
-            for a in soup.find_all("a") if "SNT 1" in a.get_text() or "SNT 2" in a.get_text()
-        ]
+        Logger.log(f"{thread_prefix} [bright_green]Operation completed.[/bright_green]")
+        DriverManager.kill_driver(driver)
 
-        snt_course_rows = []
-        for snt in tqdm(snt_course_lines):
-            splitted_snt = snt.split(" ")
-            course_code = f"{splitted_snt[0]} {splitted_snt[1]}"
+    def split_list_into_chunks(self, lst, num_chunks):
+        # Calculate the average chunk size and remainder
+        chunk_size = len(lst) // num_chunks
+        remainder = len(lst) % num_chunks
+        
+        # Initialize the chunks
+        chunks = []
+        start = 0
+        
+        for i in range(num_chunks):
+            # If there's remainder, increase the chunk size for this chunk
+            end = start + chunk_size + (1 if i < remainder else 0)
+            chunks.append(lst[start:end])
+            start = end
+        
+        return chunks
 
-            course_title = ""
-            for word in splitted_snt[2:]:
-                course_title += word + " "
+    def scrap_courses(self):
+        Logger.log_info("====== Scraping All Courses ======")
 
-            # We use <td> to split the data in the run.py, thats why we seperate with it.
-            snt_course_rows.append(
-                "<td>" + course_code + "<td>" + course_title.strip() + "<td> <td> ")
+        self.courses = []
+        Logger.log_info("Finding course codes to scrap.")
+        courses_to_scrap = sorted(self.get_course_codes())
+        Logger.log_info(f"Found {len(courses_to_scrap)} courses to scrap.")
+        
+        chunks = self.split_list_into_chunks(courses_to_scrap, MAX_THREAD_COUNT)
+        threads = []
+        for i in range(MAX_THREAD_COUNT):
+            prefix = f"[royal_blue1][Thread {str(i).zfill(2)}][/royal_blue1]"
+            t = threading.Thread(target=self.scrap_courses_thread_routine, args=(chunks[i], prefix))
+            threads.append(t)
+        
+        # Start and wait for the threads to finish.
+        for t in threads: t.start()
+        for t in threads: t.join()
 
-        # Remove Dupes.
-        snt_course_rows = list(dict.fromkeys(snt_course_rows).keys())
-
-        return courses + snt_course_rows
+        Logger.log_info("[bold green]Scraping all courses is completed.[/bold green]")
+        return self.courses        

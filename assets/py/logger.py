@@ -9,10 +9,10 @@ class Logger:
     @staticmethod
     def create_message(message: str, log_type: str, color: str) -> str:
         time_stamp = f"{datetime.now().strftime('%Y-%m-%d %H:%M:%S.%f')[:-3]}"
-        return f"[{Logger.time_stamp_color_code}][{time_stamp}][{log_type.upper()}][/{Logger.time_stamp_color_code}][{color}] {message}"
+        return f"[{Logger.time_stamp_color_code}][{time_stamp}][{log_type.upper()}][/{Logger.time_stamp_color_code}][{color}] {message}[/{color}]"
 
     @staticmethod
-    def log(message: str, log_type: str, color: str = "white") -> None:
+    def log(message: str, log_type: str="INFO", color: str = "white") -> None:
         msg = Logger.create_message(message, log_type, color)
         rprint(msg)
 
