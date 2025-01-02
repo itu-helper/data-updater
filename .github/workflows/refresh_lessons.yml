@@ -42,8 +42,7 @@ jobs:
       # Run the python script
       - name: Python Run
         run: |
-          cd assets/py
-          python run.py -scrap_target lesson
+          python src/run.py -scrap_target lesson
 
       # Commits the changes back to the data repo
       - name: Push lesson_rows.txt to Data

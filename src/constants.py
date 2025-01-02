@@ -6,11 +6,11 @@ BUILDING_CODES_URL = "https://www.sis.itu.edu.tr/TR/obs-hakkinda/bina-kodlari.ph
 PROGRAMME_CODES_URL = "https://www.sis.itu.edu.tr/TR/obs-hakkinda/lisans-program-kodlari.php"
 
 # === FILE NAMES ===
-LESSONS_FILE_NAME = "data/lessons.psv"
-COURSES_FILE_NAME = "data/courses.psv"
-COURSE_PLANS_FILE_NAME = "data/course_plans.txt"
-BUILDING_CODES_FILE_NAME = "data/building_codes.psv"
-PROGRAMME_CODES_FILE_NAME = "data/programme_codes.psv"
+LESSONS_FILE_PATH = "data/lessons.psv"
+COURSES_FILE_PATH = "data/courses.psv"
+COURSE_PLANS_FILE_PATH = "data/course_plans.txt"
+BUILDING_CODES_FILE_PATH = "data/building_codes.psv"
+PROGRAMME_CODES_FILE_PATH = "data/programme_codes.psv"
 
 # === OTHER ===
 MAX_THREAD_COUNT = 4

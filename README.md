@@ -10,7 +10,7 @@
 # **ITU Helper**
 
 </div>
-    
+
 <div align="left">
     <img src="https://raw.githubusercontent.com/itu-helper/home/main/images/logo.png" align="right"
      alt="ITU Helper Logo" width="180" height="180">
@@ -36,25 +36,34 @@ _Github Actions_ kullanarak **Veri Yenileme Aralıkları** kısmında belirtilen
 
 ## **Veri Yenileme Aralıkları**
 
--   **(00:04 - 02:49) 15dk da bir**: _Lesson_'lar güncellenir.
--   **(02:55)**: Bina ve program kodları güncellenir.
--   **(03:00)**:
-    -   **Pazartesileri**: _Course_'lar güncellenir.
-    -  **Salıları**: Ders Planları güncellenir.
--   **(05:04 - 23:49) 15dk da bir**: _Lesson_'lar güncellenir.
+- **(00:04 - 02:49) 15dk da bir**: _Lesson_'lar güncellenir.
+- **(02:55)**: Bina ve program kodları güncellenir.
+- **(03:00)**:
+  - **Pazartesileri**: _Course_'lar güncellenir.
+  - **Salıları**: Ders Planları güncellenir.
+- **(05:04 - 23:49) 15dk da bir**: _Lesson_'lar güncellenir.
 
-> 🛈 _Lesson_'ların daha sık güncellenmesinin nedeni kontenjan verilerinin güncel tutulmasının gerekmesidir. _Course_'ların ve Ders Planlarının güncellendiği sırada _Lesson_'ların güncellenememsi _Github Actions_'da kullandığımız _Git Auto Commit_'in repo'da değişiklik olması durumda commit atamamasındandır.
+> [!NOTE]
+> _Lesson_'ların daha sık güncellenmesinin nedeni kontenjan verilerinin güncel tutulmasının gerekmesidir. _Course_'ların ve Ders Planlarının güncellendiği sırada _Lesson_'ların güncellenememsi _Github Actions_'da kullandığımız _Git Auto Commit_'in repo'da değişiklik olması durumda commit atamamasındandır.
 
 ## **Verilerin İsimlendirilmesi**
 
--   **Dersler**
-    -   _MAT 281E_ → Course
-    -   _CRN: 22964, MAT 281E_ → Lesson
--   **Ders Planları**
-    -   _Bilgisayar ve Bilişim Fakültesi_ → Faculty
-    -   _Yapay Zeka ve Veri Mühedisliği_ → Program
-    -   _2021-2022 / Güz Dönemi Öncesi_ → Iteration
+- **Dersler**
+  - _MAT 281E_ → Course
+  - _CRN: 22964, MAT 281E_ → Lesson
+- **Ders Planları**
+  - _Bilgisayar ve Bilişim Fakültesi_ → Faculty
+  - _Yapay Zeka ve Veri Mühedisliği_ → Program
+  - _2021-2022 / Güz Dönemi Öncesi_ → Iteration
 
 ## **Nasıl Kullanılır?**
+
+Veriler otomatik olarak [Veri Yenileme Aralıkları](#veri-yenileme-aralıkları) bölümünde belirtilen saatlerde güncellenir. Manuel olarak çalıştırmak isterseniz, aşağıdaki kodu çalıştırın. `{SCRAP_TARGET}` yazan yere de, _scrap_'lenecek olan veriyi girin (`lesson`, `course`, `course_plan`, `misc`).
+
+```console
+python src/run.py -scrap_target {SCRAP_TARGET}
+```
+
+## **Toplanan Verilerden Nasıl Yararlanılır?**
 
 Verilerden yararlanırken izleyebileceğiniz iki ana yol bulunmakta. İlk olarak, önerdiğimiz yöntem olan [itu-helper/sdk](https://github.com/itu-helper/sdk) _repo_'sunda bulunan SDK'mizden yararlanmanız. Diğer yöntem ise, verileri _HTTP request_ ile okumak. Bu yöntemin dezavantajı, okuduğunuz dosyalardan bağlantıları kendiniz oluşturmanız gerekmesi. Daha detaylı bilgi için, [itu-helper/sdk](https://github.com/itu-helper/sdk)'nin [HTTP request](https://github.com/itu-helper/sdk?tab=readme-ov-file#http-request) bölümüne bakabilirsiniz.

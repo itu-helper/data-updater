@@ -22,13 +22,13 @@ class CourseScraper(Scraper):
         course_codes = []
 
         # Read the lessons file
-        if path.exists(f"../../{LESSONS_FILE_NAME}"):
-            with open(f"../../{LESSONS_FILE_NAME}", "r") as file:
+        if path.exists(LESSONS_FILE_PATH):
+            with open(LESSONS_FILE_PATH, "r") as file:
                 course_codes += [l.split("|")[1] for l in file.readlines() if "|" in l]
 
         # Read the course plans file
-        if path.exists(f"../../{COURSE_PLANS_FILE_NAME}"):
-            with open(f"../../{COURSE_PLANS_FILE_NAME}", "r") as file:
+        if path.exists(COURSE_PLANS_FILE_PATH):
+            with open(COURSE_PLANS_FILE_PATH, "r") as file:
                 course_rows = [l.replace("\n", "") for l in file.readlines() if l[0] != "#"]
                 for cells in [row.split("=") for row in course_rows]:
                     for cell in cells:
@@ -39,8 +39,8 @@ class CourseScraper(Scraper):
                             course_codes.append(cell)
 
         # Read the old courses files
-        if path.exists(f"../../{COURSES_FILE_NAME}"):
-            with open(f"../../{COURSES_FILE_NAME}", "r", encoding="utf-8") as file:
+        if path.exists(COURSES_FILE_PATH):
+            with open(COURSES_FILE_PATH, "r", encoding="utf-8") as file:
                 course_codes += [l.split("|")[0] for l in file.readlines() if "|" in l]
 
         return list(set([c for c in course_codes if len(c) > 0]))  # Remove duplicates and empty strings.

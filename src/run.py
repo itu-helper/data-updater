@@ -1,4 +1,4 @@
-from time import sleep, perf_counter
+from time import perf_counter
 from tqdm import tqdm
 import argparse
 
@@ -45,7 +45,7 @@ def save_lesson_rows(rows):
     # Save each row to a different line.
     lines = [process_lesson_row(row) + "\n" for row in rows]
     lines.sort()
-    with open(f"../../{LESSONS_FILE_NAME}", "w", encoding="utf-8") as f:
+    with open(LESSONS_FILE_PATH, "w", encoding="utf-8") as f:
         f.writelines(lines)
 
 
@@ -55,7 +55,7 @@ def save_course_rows(rows):
     # Save each row to a different line.
     lines = [f"{row}\n" for row in sorted(rows)]
 
-    with open(f"../../{COURSES_FILE_NAME}", "w", encoding="utf-8") as f:
+    with open(COURSES_FILE_PATH, "w", encoding="utf-8") as f:
         f.writelines(lines)
 
 
@@ -111,17 +111,17 @@ def save_course_plans(faculty_course_plans):
                     lines.append("\n" * (8 - len(semesters)))
 
     # Save lines.
-    with open(f"../../{COURSE_PLANS_FILE_NAME}", "w", encoding="utf-8") as f:
+    with open(COURSE_PLANS_FILE_PATH, "w", encoding="utf-8") as f:
         f.writelines(lines)
 
 
 def save_misc_data(data):
     # BUILDING DATA
-    with open(f"../../{BUILDING_CODES_FILE_NAME}", "w", encoding="utf-8") as f:
+    with open(BUILDING_CODES_FILE_PATH, "w", encoding="utf-8") as f:
         f.writelines(data[0])
 
     # PROGRAMME DATA
-    with open(f"../../{PROGRAMME_CODES_FILE_NAME}", "w", encoding="utf-8") as f:
+    with open(PROGRAMME_CODES_FILE_PATH, "w", encoding="utf-8") as f:
         f.writelines(data[1])
 
 
