@@ -262,10 +262,10 @@ class CoursePlanScraper(Scraper):
                 iteration = s[iteration_match.start():].strip()
 
             # We only want the name of the program, without the language part and the iteration, If the iteration is found.
-            # start from the part before the iteration, then get the part before where (%100  starts. Make sure both 30% and 100% are supported.
+            # start from the part before the iteration, then get the part before where %100  starts. Make sure both 30% and 100% are supported.
             # Also, support both Turkish and English, where the possition of the % changes.
             before_iteration = s[:iteration_match.start()].strip() if iteration is not None else None
-            program_name_match = re.search(r'\(%\d{2,3}|\(\d{2,3}%', before_iteration if before_iteration is not None else s)
+            program_name_match = re.search(r'\%\d{2,3}|\\d{2,3}%', before_iteration if before_iteration is not None else s)
             if program_name_match:
                 program_name = s[:program_name_match.start()].strip()
             elif before_iteration is not None:

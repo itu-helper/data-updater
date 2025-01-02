@@ -84,12 +84,19 @@ def save_course_plans(faculty_course_plans):
                     line = ""
                     for j, course in enumerate(semester):
                         if type(course) is dict:
-                            for selective_course_title in course.keys():
-                                line += f"[{selective_course_title}*("
-                                for k, selective_course in enumerate(course[selective_course_title]):
-                                    line += f"{selective_course}"
+                            selective_course_title = list(course.keys())[0]
+                            selective_course_codes = course[selective_course_title]
+                            selective_course_title = selective_course_title.replace("\n", "")
 
-                                    if k != len(course[selective_course_title]) - 1:
+                            if len(selective_course_codes) <= 0:
+                                Logger.log_info(f"Empty selective course list found in {faculty} - {faculty_plan} - {faculty_plan_iter} - {i + 1}. semester.")
+                                line += f"[{selective_course_title}*()]"
+                            else:
+                                line += f"[{selective_course_title}*("
+                                for k, course in enumerate(selective_course_codes):
+                                    line += course.replace("\n", "")
+
+                                    if k != len(selective_course_codes) - 1:
                                         line += "|"
                                     else:
                                         line += ")]"
