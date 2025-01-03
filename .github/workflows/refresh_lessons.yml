@@ -54,14 +54,3 @@ jobs:
           destination_repo: 'itu-helper/data'
           user_email: 'data-updater@itu-helper.com'
           user_name: 'ITU Helper'
-
-      # Commits the changes back to the data repo
-      - name: Push course_rows.txt to Data
-        uses: dmnemec/copy_file_to_another_repo_action@main
-        env:
-          API_TOKEN_GITHUB: ${{ secrets.API_TOKEN_GITHUB }}
-        with:
-          source_file: './data/course_rows.txt'
-          destination_repo: 'itu-helper/data'
-          user_email: 'data-updater@itu-helper.com'
-          user_name: 'ITU Helper'
