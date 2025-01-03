@@ -214,15 +214,16 @@ class CoursePlanScraper(Scraper):
         
         Logger.log_info(f"{log_prefix} Finished Scraping The Faculty: [blue]\"{faculty_name}\"[/blue]")
 
-    def create_dropdown_and_get_elements(self, dropdown_read_func, dropdown_generation_element, max_retries: int=10, driver=None):
+    def create_dropdown_and_get_elements(self, dropdown_read_func, dropdown_generation_element, max_retries: int=20, driver=None):
         for _ in range(max_retries):
             dropdown_generation_element.click()
-            self.wait()
+            self.wait(2)
             dropdown_vals = dropdown_read_func(driver)
 
             # If the dropdown values exist and there are no stale elements in the dropdown values, return the values
             if dropdown_vals is not None and True not in [self.is_element_stale(e) for e in dropdown_vals]:
                 return dropdown_vals
+            dropdown_vals = None
 
         return dropdown_vals
 
