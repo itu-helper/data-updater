@@ -176,7 +176,7 @@ class CoursePlanScraper(Scraper):
         if faculty_name not in self.faculty_course_plans.keys():
             self.faculty_course_plans[faculty_name] = dict()
 
-        Logger.log(f"{log_prefix} Found the following program types for the faculty: [blue]\"{faculty_name}\"[/blue]: {', '.join([p.get_attribute('innerHTML') for p in program_types])}")
+        Logger.log(f"{log_prefix} Found the following program types for the faculty: [blue]{faculty_name}[/blue]: {', '.join([p.get_attribute('innerHTML') for p in program_types])}")
         for program_type, program_type_name in self.get_attribute_element_pairs(program_types, "innerHTML"):
             # Make sure the program type is allowed.
             if program_type_name not in ALLOWED_PROGRAM_TYPES:
@@ -186,14 +186,14 @@ class CoursePlanScraper(Scraper):
             # Read the programs, if it's empty, skip the program type.
             programs = self.create_dropdown_and_get_elements(self.get_program_dropdown_options, program_type, driver=driver)
             if programs is None:
-                # Logger.log_info(f"{log_prefix} Skipping the program type: [blue]{faculty_name}[/blue] [cyan]\"{program_type_name}\"[/cyan]. Programs empty")
+                Logger.log_info(f"{log_prefix} Skipping the program type: [blue]{faculty_name}[/blue]/[cyan]{program_type_name}[/cyan]. Programs empty")
                 continue
 
             for program, program_name in self.get_attribute_element_pairs(programs, "innerHTML"):
                 # Read the plan types, if it's empty, skip the program.
                 plan_types = self.create_dropdown_and_get_elements(self.get_plan_type_dropdown_options, program, driver=driver)
                 if plan_types is None:
-                    # Logger.log_info(f"{log_prefix} Skipping the program type: [blue]{faculty_name}[/blue] [cyan]\"{program_name}\"[/cyan]. Plan Types empty")
+                    Logger.log_info(f"{log_prefix} Skipping the program: [blue]{faculty_name}[/blue]/[cyan]{program_type_name}[/cyan]/[magenta]{program_name}\"[/magenta]. Plan Types empty")
                     continue
 
                 for program_type, program_type_value in self.get_attribute_element_pairs(plan_types, "value"):
