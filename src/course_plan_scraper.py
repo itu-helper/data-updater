@@ -295,6 +295,11 @@ class CoursePlanScraper(Scraper):
                         iteration = self.DEFAULT_ITERATION_NAME
 
                     program_name_with_type = f"{trimmed_program_name} ({program_type_name})"
+                    # Because the language part can have both paranthesis or not (thank you itu), we need to find the match with out a paranthesis
+                    # and if there is a paranthesis, remove it afterwards. Solving this inside `get_iteration_from_program_name` is probably much better
+                    # but this works for now. Here, we just replace "( (" with "(". '... Programı ( (100% İngilizce Program)' -> '... Programı (100% İngilizce Program)'"
+                    program_name_with_type = program_name_with_type.replace("( (", "(")
+                    
                     if program_name_with_type not in formatted_dict[faculty].keys():
                         formatted_dict[faculty][program_name_with_type] = dict()
                     
