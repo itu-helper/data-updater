@@ -210,7 +210,9 @@ class CoursePlanScraper(Scraper):
                         self.faculty_course_plans[faculty_name][program_type_name] = program_data
                     else:
                         self.faculty_course_plans[faculty_name][program_type_name].update(program_data)
+                    
                     driver.back()
+                    driver.refresh()
         
         Logger.log_info(f"{log_prefix} Finished Scraping The Faculty: [blue]\"{faculty_name}\"[/blue]")
 
