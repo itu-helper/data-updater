@@ -14,4 +14,3 @@ PROGRAMME_CODES_FILE_PATH = "data/programme_codes.psv"
 
 # === OTHER ===
 MAX_THREAD_COUNT = 4
-MAX_THREAD_COUNT_COURSE_PLANS = 2

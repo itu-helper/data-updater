@@ -211,7 +211,8 @@ class CoursePlanScraper(Scraper):
                     else:
                         self.faculty_course_plans[faculty_name][program_type_name].update(program_data)
                     
-                    driver.back()
+                    driver.execute_script("window.history.back();")
+                    # driver.back()
         
         Logger.log_info(f"{log_prefix} Finished Scraping The Faculty: [blue]\"{faculty_name}\"[/blue]")
 
@@ -344,7 +345,7 @@ class CoursePlanScraper(Scraper):
 
         # Create the threads
         threads = []
-        for i in range(min(MAX_THREAD_COUNT_COURSE_PLANS, len(self.faculties))):
+        for i in range(min(MAX_THREAD_COUNT, len(self.faculties))):
             t = threading.Thread(target=self.scrap_course_plan_thread_routine, args=(i,))
             threads.append(t)
         
