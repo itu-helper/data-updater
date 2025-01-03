@@ -8,7 +8,7 @@ on:
   workflow_dispatch:
 
 jobs:
-  refresh_courses_and_course_plans:
+  refresh_courses:
     runs-on: ubuntu-latest
 
     steps:

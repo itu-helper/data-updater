@@ -11,7 +11,7 @@ from selenium.webdriver.support import expected_conditions as EC
 from constants import *
 
 COURSE_PLANS_URL = "https://obs.itu.edu.tr/public/DersPlan/"
-ALLOWED_PROGRAM_TYPE_VALS = [
+ALLOWED_PLAN_TYPE_VALS = [
     "lisans",  # <option value="lisans">Undergraduate</option>
     "uolp",    # <option value="uolp">UOLP</option>
 ]
@@ -196,16 +196,16 @@ class CoursePlanScraper(Scraper):
                     Logger.log_info(f"{log_prefix} Skipping the program: [blue]{faculty_name}[/blue]/[cyan]{program_type_name}[/cyan]/[magenta]{program_name}\"[/magenta]. Plan Types empty")
                     continue
 
-                for program_type, program_type_value in self.get_attribute_element_pairs(plan_types, "value"):
+                for plan_type, plan_type_value in self.get_attribute_element_pairs(plan_types, "value"):
                     # Make sure the plan type is allowed.
-                    if program_type_value not in ALLOWED_PROGRAM_TYPE_VALS: continue
+                    if plan_type_value not in ALLOWED_PLAN_TYPE_VALS: continue
 
                     # Click the submit/göster button, and wait for the iterations list page to load.
-                    program_type.click()
+                    plan_type.click()
                     driver.find_element(By.CSS_SELECTOR, 'input[type="submit"]').click()
                     self.wait()
 
-                    program_data = self.scrap_iterations(f"{program_name} ({program_type_name})", driver.current_url, log_prefix + f" [{program_type_value}]")
+                    program_data = self.scrap_iterations(f"{program_name} ({program_type_name})", driver.current_url, log_prefix + f" [{plan_type_value}]")
                     if program_type_name not in self.faculty_course_plans[faculty_name]:
                         self.faculty_course_plans[faculty_name][program_type_name] = program_data
                     else:
