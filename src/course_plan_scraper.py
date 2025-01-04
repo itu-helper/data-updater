@@ -190,7 +190,7 @@ class CoursePlanScraper(Scraper):
                     break
 
             return faculty, program_type, program, plan_type
-        
+
         # Open the course plans page.
         Logger.log_info(f"{log_prefix} Starting fetching the faculty: [blue]\"{faculty_name}\"[/blue]")
         driver.get(COURSE_PLANS_URL)
@@ -220,9 +220,9 @@ class CoursePlanScraper(Scraper):
             if program_type_name not in ALLOWED_PROGRAM_TYPES:
                 # Logger.log_info(f"{log_prefix} Skipping the program type: [blue]{faculty_name}[/blue] [cyan]\"{program_type_name}\"[/cyan]. Not allowed")
                 continue
-            
+
             # Read the programs, if it's empty, skip the program type.
-            program_type = [p for p in self.get_program_type_dropdown_options(driver) if p.get_attribute("innerHTML") == program_type_name][0]
+            faculty, program_type, _, __ = update_all_dropdown_references(program_type_name)
             programs = self.create_dropdown_and_get_elements(self.get_program_dropdown_options, program_type, driver=driver)
             if programs is None:
                 Logger.log_info(f"{log_prefix} Skipping the program type: [blue]{faculty_name}[/blue]/[cyan]{program_type_name}[/cyan]. Programs empty")
@@ -231,7 +231,7 @@ class CoursePlanScraper(Scraper):
 
             for program_name in program_names:
                 # Read the plan types, if it's empty, skip the program.
-                program = [p for p in self.get_program_dropdown_options(driver) if p.get_attribute("innerHTML") == program_name][0]
+                faculty, program_type, program, __ = update_all_dropdown_references(program_type_name, program_name)
                 plan_types = self.create_dropdown_and_get_elements(self.get_plan_type_dropdown_options, program, driver=driver)
                 if plan_types is None:
                     Logger.log_info(f"{log_prefix} Skipping the program: [blue]{faculty_name}[/blue]/[cyan]{program_type_name}[/cyan]/[magenta]{program_name}\"[/magenta]. Plan Types empty")
@@ -242,8 +242,8 @@ class CoursePlanScraper(Scraper):
                     if plan_type_value not in ALLOWED_PLAN_TYPE_VALS: continue
 
                     # Click the submit/göster button, and wait for the iterations list page to load.
-                    plan_type.click()
                     try:
+                        plan_type.click()
                         driver.find_element(By.CSS_SELECTOR, 'input[type="submit"]').click()
                         self.wait()
                         url = driver.current_url  # This causes the UnexpectedAlertPresentException if the dropdowns are not selected.
@@ -253,7 +253,6 @@ class CoursePlanScraper(Scraper):
                         plan_type.click()
                         driver.find_element(By.CSS_SELECTOR, 'input[type="submit"]').click()
                         self.wait()
-                        pass
 
                     program_data = self.scrap_iterations(f"{program_name} ({program_type_name})", driver.current_url, log_prefix + f" [{plan_type_value}]")
                     if program_type_name not in self.faculty_course_plans[faculty_name]:
