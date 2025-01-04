@@ -154,42 +154,6 @@ class CoursePlanScraper(Scraper):
         return options if len(options) > 0 else None
 
     def scrap_faculty_course_plans(self, faculty_name: str, driver, log_prefix: str="") -> None:
-        def update_all_dropdown_references(program_type_name:str=None, program_name:str=None, plan_type_value:str=None):
-            faculty, program_type, program, plan_type = None, None, None, None
-            # Find the dropdown option for the faculty.
-            filtered_faculties = [f for f in self.get_faculty_dropdown_options(driver) if f.get_attribute("innerHTML") == faculty_name]
-            if len(filtered_faculties) != 0:
-                faculty = filtered_faculties[0]
-
-            if faculty is None or program_type_name is None: return faculty, program_type, program, plan_type
-
-            # Read the program types, if it's empty, stop fetching.
-            program_types = self.create_dropdown_and_get_elements(self.get_program_type_dropdown_options, faculty, driver=driver)
-            for pt in program_types:
-                if pt.get_attribute("innerHTML") == program_type_name:
-                    program_type = pt
-                    break
-
-            if program_type is None or program_name is None: return faculty, program_type, program, plan_type
-
-            # Reselect the program type
-            programs = self.create_dropdown_and_get_elements(self.get_program_dropdown_options, program_type, driver=driver)
-            for p in programs:
-                if p.get_attribute("innerHTML") == program_name:
-                    program = p
-                    break
-
-            if program is None or plan_type_value is None: return faculty, program_type, program, plan_type
-
-            # Reselect the plan types
-            plan_types = self.create_dropdown_and_get_elements(self.get_plan_type_dropdown_options, program, driver=driver)
-            for pt in plan_types:
-                if pt.get_attribute("value") == plan_type_value:
-                    plan_type = pt
-                    break
-
-            return faculty, program_type, program, plan_type
-
         # Open the course plans page.
         Logger.log_info(f"{log_prefix} Starting fetching the faculty: [blue]\"{faculty_name}\"[/blue]")
         driver.get(COURSE_PLANS_URL)
@@ -219,9 +183,9 @@ class CoursePlanScraper(Scraper):
             if program_type_name not in ALLOWED_PROGRAM_TYPES:
                 # Logger.log_info(f"{log_prefix} Skipping the program type: [blue]{faculty_name}[/blue] [cyan]\"{program_type_name}\"[/cyan]. Not allowed")
                 continue
-
+            
             # Read the programs, if it's empty, skip the program type.
-            faculty, program_type, _, __ = update_all_dropdown_references(program_type_name)
+            program_type = [p for p in self.get_program_type_dropdown_options(driver) if p.get_attribute("innerHTML") == program_type_name][0]
             programs = self.create_dropdown_and_get_elements(self.get_program_dropdown_options, program_type, driver=driver)
             if programs is None:
                 Logger.log_info(f"{log_prefix} Skipping the program type: [blue]{faculty_name}[/blue]/[cyan]{program_type_name}[/cyan]. Programs empty")
@@ -229,9 +193,8 @@ class CoursePlanScraper(Scraper):
             program_names = [p.get_attribute("innerHTML") for p in programs]
 
             for program_name in program_names:
-
                 # Read the plan types, if it's empty, skip the program.
-                faculty, program_type, program, __ = update_all_dropdown_references(program_type_name, program_name)
+                program = [p for p in self.get_program_dropdown_options(driver) if p.get_attribute("innerHTML") == program_name][0]
                 plan_types = self.create_dropdown_and_get_elements(self.get_plan_type_dropdown_options, program, driver=driver)
                 if plan_types is None:
                     Logger.log_info(f"{log_prefix} Skipping the program: [blue]{faculty_name}[/blue]/[cyan]{program_type_name}[/cyan]/[magenta]{program_name}\"[/magenta]. Plan Types empty")
@@ -262,7 +225,36 @@ class CoursePlanScraper(Scraper):
                     place_holders = self.find_elements_by_css_selector("span.select2-selection__placeholder", driver)
                     if len(place_holders) > 0:
                         Logger.log_info(f"{log_prefix} Dropdown values are cleared, reapplying them.")
-                        faculty, program_type, program, plan_type = update_all_dropdown_references(program_type_name, program_name, plan_type_value)
+
+                        # Find the dropdown option for the faculty.
+                        filtered_faculties = [f for f in self.get_faculty_dropdown_options(driver) if f.get_attribute("innerHTML") == faculty_name]
+                        if len(filtered_faculties) == 0:
+                            Logger.log_error(f"{log_prefix} Failed to find the faculty: [cyan]\"{faculty_name}\"[/cyan]")
+                            driver.quit()
+                            return
+                        faculty = filtered_faculties[0]
+
+                        # Read the program types, if it's empty, stop fetching.
+                        program_types = self.create_dropdown_and_get_elements(self.get_program_type_dropdown_options, faculty, driver=driver)
+                        for pt in program_types:
+                            if pt.get_attribute("innerHTML") == program_type_name:
+                                program_type = pt
+                                break
+
+                        # Reselect the program type
+                        programs = self.create_dropdown_and_get_elements(self.get_program_dropdown_options, program_type, driver=driver)
+                        print([self.is_element_stale(p) for p in programs])
+                        for p in programs:
+                            if p.get_attribute("innerHTML") == program_name:
+                                program = p
+                                break
+
+                        # Reselect the plan types
+                        plan_types = self.create_dropdown_and_get_elements(self.get_plan_type_dropdown_options, program, driver=driver)
+                        for pt in plan_types:
+                            if pt.get_attribute("value") == plan_type_value:
+                                plan_type = pt
+                                break
         
         Logger.log_info(f"{log_prefix} Finished Scraping The Faculty: [blue]\"{faculty_name}\"[/blue]")
 
