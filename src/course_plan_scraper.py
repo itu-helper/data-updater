@@ -155,7 +155,7 @@ class CoursePlanScraper(Scraper):
         return options if len(options) > 0 else None
 
     def scrap_faculty_course_plans(self, faculty_name: str, driver, log_prefix: str="") -> None:
-        def update_all_dropdown_references(program_type_name:str=None, program_name:str=None, plan_type_value:str=None):
+        def update_all_dropdown_references(program_type_name:str=None, program_name:str=None, plan_type_value:str=None, max_retries: int=40):
             faculty, program_type, program, plan_type = None, None, None, None
             # Find the dropdown option for the faculty.
             filtered_faculties = [f for f in self.get_faculty_dropdown_options(driver) if f.get_attribute("innerHTML") == faculty_name]
@@ -165,7 +165,7 @@ class CoursePlanScraper(Scraper):
             if faculty is None or program_type_name is None: return faculty, program_type, program, plan_type
 
             # Read the program types, if it's empty, stop fetching.
-            program_types = self.create_dropdown_and_get_elements(self.get_program_type_dropdown_options, faculty, driver=driver, max_retries=40)
+            program_types = self.create_dropdown_and_get_elements(self.get_program_type_dropdown_options, faculty, driver=driver, max_retries=max_retries)
             for pt in program_types:
                 if pt.get_attribute("innerHTML") == program_type_name:
                     program_type = pt
@@ -174,7 +174,7 @@ class CoursePlanScraper(Scraper):
             if program_type is None or program_name is None: return faculty, program_type, program, plan_type
 
             # Reselect the program type
-            programs = self.create_dropdown_and_get_elements(self.get_program_dropdown_options, program_type, driver=driver, max_retries=40)
+            programs = self.create_dropdown_and_get_elements(self.get_program_dropdown_options, program_type, driver=driver, max_retries=max_retries)
             for p in programs:
                 if p.get_attribute("innerHTML") == program_name:
                     program = p
@@ -183,7 +183,7 @@ class CoursePlanScraper(Scraper):
             if program is None or plan_type_value is None: return faculty, program_type, program, plan_type
 
             # Reselect the plan types
-            plan_types = self.create_dropdown_and_get_elements(self.get_plan_type_dropdown_options, program, driver=driver, max_retries=40)
+            plan_types = self.create_dropdown_and_get_elements(self.get_plan_type_dropdown_options, program, driver=driver, max_retries=max_retries)
             for pt in plan_types:
                 if pt.get_attribute("value") == plan_type_value:
                     plan_type = pt
@@ -277,6 +277,8 @@ class CoursePlanScraper(Scraper):
         Logger.log_info(f"{log_prefix} Finished Scraping The Faculty: [blue]\"{faculty_name}\"[/blue]")
 
     def create_dropdown_and_get_elements(self, dropdown_read_func, dropdown_generation_element, max_retries: int=20, driver=None):
+        if dropdown_generation_element is None: return None
+        
         for _ in range(max_retries):
             dropdown_generation_element.click()
             self.wait(2)
@@ -381,7 +383,7 @@ class CoursePlanScraper(Scraper):
             #     break
 
             self.completed_faculty_count += 1  # Increment the completed faculty count before completion so that other threads don't try to fetch the same faculty.
-            thread_prefix = f"[royal_blue1][Thread {thread_no} (F: {self.completed_faculty_count}/{len(self.faculties)})][/royal_blue1]"
+            thread_prefix = f"[royal_blue1][Thread {str(thread_no).zfill(2)} (F: {self.completed_faculty_count}/{len(self.faculties)})][/royal_blue1]"
             faculty = self.faculties[self.completed_faculty_count - 1]
             
             self.scrap_faculty_course_plans(faculty, thread_driver, thread_prefix)
