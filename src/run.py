@@ -132,7 +132,7 @@ parser.add_argument('-scrap_target', type=str,
 if __name__ == "__main__":
     args = parser.parse_args()
     t0 = perf_counter()
-    driver = None
+    driver = DriverManager.create_driver()
 
     # Scrap Courses
     if args.scrap_target == "course":
@@ -140,7 +140,6 @@ if __name__ == "__main__":
         save_course_rows(course_rows)
     # Scrap Course Plans
     elif args.scrap_target == "course_plan":
-        driver = DriverManager.create_driver()
         faculty_course_plans = CoursePlanScraper(driver).scrap_course_plans()
         save_course_plans(faculty_course_plans)
     # Scrap Building Codes and Programme Codes
@@ -149,12 +148,10 @@ if __name__ == "__main__":
         save_misc_data(data)
     # Scrap Lessons
     elif args.scrap_target == "lesson":
-        driver = DriverManager.create_driver()
         lesson_rows = LessonScraper(driver).scrap_tables()
         save_lesson_rows(lesson_rows)
 
-    if driver is not None:
-        DriverManager.kill_driver(driver)
+    DriverManager.kill_driver(driver)
 
     t1 = perf_counter()
     Logger.log_info(f"Scraping & Saving Completed in [green]{round(t1 - t0, 2)}[/green] seconds")
