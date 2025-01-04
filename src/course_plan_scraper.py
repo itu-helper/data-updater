@@ -165,7 +165,7 @@ class CoursePlanScraper(Scraper):
             if faculty is None or program_type_name is None: return faculty, program_type, program, plan_type
 
             # Read the program types, if it's empty, stop fetching.
-            program_types = self.create_dropdown_and_get_elements(self.get_program_type_dropdown_options, faculty, driver=driver)
+            program_types = self.create_dropdown_and_get_elements(self.get_program_type_dropdown_options, faculty, driver=driver, max_retries=40)
             for pt in program_types:
                 if pt.get_attribute("innerHTML") == program_type_name:
                     program_type = pt
@@ -174,7 +174,7 @@ class CoursePlanScraper(Scraper):
             if program_type is None or program_name is None: return faculty, program_type, program, plan_type
 
             # Reselect the program type
-            programs = self.create_dropdown_and_get_elements(self.get_program_dropdown_options, program_type, driver=driver)
+            programs = self.create_dropdown_and_get_elements(self.get_program_dropdown_options, program_type, driver=driver, max_retries=40)
             for p in programs:
                 if p.get_attribute("innerHTML") == program_name:
                     program = p
@@ -183,7 +183,7 @@ class CoursePlanScraper(Scraper):
             if program is None or plan_type_value is None: return faculty, program_type, program, plan_type
 
             # Reselect the plan types
-            plan_types = self.create_dropdown_and_get_elements(self.get_plan_type_dropdown_options, program, driver=driver)
+            plan_types = self.create_dropdown_and_get_elements(self.get_plan_type_dropdown_options, program, driver=driver, max_retries=40)
             for pt in plan_types:
                 if pt.get_attribute("value") == plan_type_value:
                     plan_type = pt
@@ -240,6 +240,8 @@ class CoursePlanScraper(Scraper):
                 for plan_type, plan_type_value in self.get_attribute_element_pairs(plan_types, "value"):
                     # Make sure the plan type is allowed.
                     if plan_type_value not in ALLOWED_PLAN_TYPE_VALS: continue
+
+                    faculty, program_type, program, plan_type = update_all_dropdown_references(program_type_name, program_name, plan_type_value)
 
                     # Click the submit/göster button, and wait for the iterations list page to load.
                     try:
