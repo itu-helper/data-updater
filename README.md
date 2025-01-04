@@ -69,3 +69,9 @@ python src/run.py -scrap_target {SCRAP_TARGET}
 ## **Toplanan Verilerden Nasıl Yararlanılır?**
 
 Verilerden yararlanırken izleyebileceğiniz iki ana yol bulunmakta. İlk olarak, önerdiğimiz yöntem olan [itu-helper/sdk](https://github.com/itu-helper/sdk) _repo_'sunda bulunan SDK'mizden yararlanmanız. Diğer yöntem ise, verileri _HTTP request_ ile okumak. Bu yöntemin dezavantajı, okuduğunuz dosyalardan bağlantıları kendiniz oluşturmanız gerekmesi. Daha detaylı bilgi için, [itu-helper/sdk](https://github.com/itu-helper/sdk)'nin [HTTP request](https://github.com/itu-helper/sdk?tab=readme-ov-file#http-request) bölümüne bakabilirsiniz.
+
+## **Bilinen Problemler**
+
+### **1. Eksik Ders İsimleri**
+
+Dersler (Course) _scrap_'lenirken kullanılan [sayfa](https://www.sis.itu.edu.tr/TR/ogrenci/lisans/ders-bilgileri/ders-bilgileri.php), bazı dersler için isim bulundurmuyor veya yanlış isim bulundurmuyor. Örneğin `YZV 311E` dersi için görünen ders adı `N`, başka sayfalarda `Veri Madenciliği` olarak görünmesine rağmen.
