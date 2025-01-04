@@ -45,7 +45,7 @@ jobs:
           python src/run.py -scrap_target course_plan
 
       # # Commits the changes back to the data repo
-      # - name: Push course_plans.txt to Data
+      # - name: Push course_plans.txt to itu-helper/data
       #   uses: dmnemec/copy_file_to_another_repo_action@main
       #   env:
       #     API_TOKEN_GITHUB: ${{ secrets.API_TOKEN_GITHUB }}

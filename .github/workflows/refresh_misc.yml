@@ -45,7 +45,7 @@ jobs:
           python src/run.py -scrap_target misc
 
       # Commits the changes back to the data repo
-      - name: Push building_codes.txt to Data
+      - name: Push building_codes.psv to itu-helper/data
         uses: dmnemec/copy_file_to_another_repo_action@main
         env:
           API_TOKEN_GITHUB: ${{ secrets.API_TOKEN_GITHUB }}
@@ -56,7 +56,7 @@ jobs:
           user_name: 'ITU Helper'
 
       # Commits the changes back to the data repo
-      - name: Push programme_codes.txt to Data
+      - name: Push programme_codes.psv to itu-helper/data
         uses: dmnemec/copy_file_to_another_repo_action@main
         env:
           API_TOKEN_GITHUB: ${{ secrets.API_TOKEN_GITHUB }}

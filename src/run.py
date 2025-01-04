@@ -132,21 +132,21 @@ parser.add_argument('-scrap_target', type=str,
 if __name__ == "__main__":
     args = parser.parse_args()
     t0 = perf_counter()
+
+    # Even though some scrappers don't use the given driver, not creating this sometimes throws issues, especially on GitHub Actions.
+    # When creating a driver, we install the Chrome WebDriver. When we create multiple drivers on different threads, the downloads
+    # may conflict and cause issues. So, we create the driver here. This way, even if we don't use it, the WebDriver is installed.
     driver = DriverManager.create_driver()
 
-    # Scrap Courses
     if args.scrap_target == "course":
         course_rows = CourseScraper(None).scrap_courses()
         save_course_rows(course_rows)
-    # Scrap Course Plans
     elif args.scrap_target == "course_plan":
         faculty_course_plans = CoursePlanScraper(driver).scrap_course_plans()
         save_course_plans(faculty_course_plans)
-    # Scrap Building Codes and Programme Codes
-    elif args.scrap_target == "misc":
+    elif args.scrap_target == "misc":  # Scrap Building Codes and Programme Codes
         data = MiscScraper().scrap_data()
         save_misc_data(data)
-    # Scrap Lessons
     elif args.scrap_target == "lesson":
         lesson_rows = LessonScraper(driver).scrap_tables()
         save_lesson_rows(lesson_rows)

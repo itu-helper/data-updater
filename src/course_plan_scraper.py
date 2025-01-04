@@ -153,7 +153,7 @@ class CoursePlanScraper(Scraper):
             return options[1:] if len(options) > 1 else None
         return options if len(options) > 0 else None
 
-    def scrap_faculty_course_plans(self, faculty_name: str, driver, log_prefix: str="") -> None:
+    def scrap_faculty_course_plans(self, faculty_name: str, driver, log_prefix: str="", prev_loop_values: list | None=None) -> None:
         # Open the course plans page.
         Logger.log_info(f"{log_prefix} Starting fetching the faculty: [blue]\"{faculty_name}\"[/blue]")
         driver.get(COURSE_PLANS_URL)
@@ -177,7 +177,9 @@ class CoursePlanScraper(Scraper):
             self.faculty_course_plans[faculty_name] = dict()
 
         Logger.log(f"{log_prefix} Found the following program types for the faculty: [blue]{faculty_name}[/blue]: {', '.join([p.get_attribute('innerHTML') for p in program_types])}")
-        for program_type, program_type_name in self.get_attribute_element_pairs(program_types, "innerHTML"):
+        for i, (program_type, program_type_name) in enumerate(self.get_attribute_element_pairs(program_types, "innerHTML")):
+            if prev_loop_values is not None and i < prev_loop_values[0]: continue
+            
             # Make sure the program type is allowed.
             if program_type_name not in ALLOWED_PROGRAM_TYPES:
                 # Logger.log_info(f"{log_prefix} Skipping the program type: [blue]{faculty_name}[/blue] [cyan]\"{program_type_name}\"[/cyan]. Not allowed")
@@ -189,14 +191,18 @@ class CoursePlanScraper(Scraper):
                 Logger.log_info(f"{log_prefix} Skipping the program type: [blue]{faculty_name}[/blue]/[cyan]{program_type_name}[/cyan]. Programs empty")
                 continue
 
-            for program, program_name in self.get_attribute_element_pairs(programs, "innerHTML"):
+            for j, (program, program_name) in enumerate(self.get_attribute_element_pairs(programs, "innerHTML")):
+                if prev_loop_values is not None and (j < prev_loop_values[1] and i == prev_loop_values[0]): continue
+                
                 # Read the plan types, if it's empty, skip the program.
                 plan_types = self.create_dropdown_and_get_elements(self.get_plan_type_dropdown_options, program, driver=driver)
                 if plan_types is None:
                     Logger.log_info(f"{log_prefix} Skipping the program: [blue]{faculty_name}[/blue]/[cyan]{program_type_name}[/cyan]/[magenta]{program_name}\"[/magenta]. Plan Types empty")
                     continue
 
-                for plan_type, plan_type_value in self.get_attribute_element_pairs(plan_types, "value"):
+                for k, (plan_type, plan_type_value) in enumerate(self.get_attribute_element_pairs(plan_types, "value")):
+                    if prev_loop_values is not None and (k <= prev_loop_values[2] and j == prev_loop_values[1] and i == prev_loop_values[0]): continue
+                    
                     # Make sure the plan type is allowed.
                     if plan_type_value not in ALLOWED_PLAN_TYPE_VALS: continue
 
@@ -211,8 +217,16 @@ class CoursePlanScraper(Scraper):
                     else:
                         self.faculty_course_plans[faculty_name][program_type_name].update(program_data)
                     
-                    driver.execute_script("window.history.back();")
-                    # driver.back()
+                    driver.back()
+
+                    # After going back, sometimes the dropdown values are not the same. It stays the same consistently when running locally
+                    # however, when running on GitHub actions, it sometimes changes. So we need to re-read the dropdown values.
+                    # So, if the dropdowns are cleared, rerun this method, but skip the values that are already fetched.
+                    # That's why we use enumerate. Make sure to increment k by 1 but not the others.
+                    place_holders = self.find_elements_by_css_selector("span.select2-selection__placeholder", driver)
+                    if len(place_holders) > 0:
+                        Logger.log_info(f"{log_prefix} Dropdown values are cleared, rerunning the method.")
+                        self.scrap_faculty_course_plans(faculty_name, driver, log_prefix, [i, j, k])
         
         Logger.log_info(f"{log_prefix} Finished Scraping The Faculty: [blue]\"{faculty_name}\"[/blue]")
 

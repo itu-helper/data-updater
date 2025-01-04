@@ -45,7 +45,7 @@ jobs:
           python src/run.py -scrap_target lesson
 
       # Commits the changes back to the data repo
-      - name: Push lesson_rows.txt to Data
+      - name: Push lessons.psv to itu-helper/data
         uses: dmnemec/copy_file_to_another_repo_action@main
         env:
           API_TOKEN_GITHUB: ${{ secrets.API_TOKEN_GITHUB }}
