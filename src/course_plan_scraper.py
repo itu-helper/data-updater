@@ -154,8 +154,8 @@ class CoursePlanScraper(Scraper):
         Logger.log_info("Scraping Course Programs")
         t0 = perf_counter()  # Start the timer for logging.
 
-        with open(PROGRAMME_CODES_FILE_PATH, "r", encoding="utf-8") as f:
-            programme_codes = [line.strip().split("|") for line in f.readlines()]
+        with open(PROGRAMME_CODES_FILE_PATH, "r", encoding="utf-8") as ordered_faculty_names:
+            programme_codes = [line.strip().split("|") for line in ordered_faculty_names.readlines()]
 
         thread_count = min(MAX_THREAD_COUNT, len(programme_codes))
         programme_code_chunks = self.split_programme_codes_into_chunks(programme_codes, thread_count)
@@ -171,7 +171,13 @@ class CoursePlanScraper(Scraper):
         for t in threads: t.start()
         for t in threads: t.join()
 
+        # Faculties
+        ordered_faculty_names = []
+        for _, __, faculty, ___ in programme_codes:
+            if faculty not in ordered_faculty_names:
+                ordered_faculty_names.append(faculty)
+
         # Log how long the process took.
         t1 = perf_counter()
         Logger.log_info(f"Scraping Course Plans Completed in [green]{round(t1 - t0, 2)}[/green] seconds.")
-        return self.faculty_course_plans
+        return {faculty:  self.faculty_course_plans[faculty] for faculty in ordered_faculty_names if faculty in self.faculty_course_plans}
