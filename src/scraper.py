@@ -78,10 +78,6 @@ class Scraper:
             soup = BeautifulSoup(page.content, "html.parser")
             return soup
     
-        except requests.exceptions.RequestException as e:
-            Logger.log_warning(f"Failed to load the url {url}, trying again. Error raised: {e}")
-            self.wait()
-            return self.get_soup_from_url(url)
         except Exception as e:
             Logger.log_error(f"Failed to load the url {url}, error: {e}")
             return None
