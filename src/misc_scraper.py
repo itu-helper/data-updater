@@ -1,6 +1,7 @@
 from bs4 import BeautifulSoup
 from requests import get
 from constants import *
+from logger import Logger
 
 
 class MiscScraper:
@@ -11,9 +12,11 @@ class MiscScraper:
         )
 
     def scrap_building_codes(self, url):
+        Logger.log_info("Scraping building codes...")
+
         r = get(url)
         r.encoding = r.apparent_encoding
-        soup = BeautifulSoup(r.text, "html.parser", from_encoding="utf-8")
+        soup = BeautifulSoup(r.text, "html.parser")
 
         output = ""
         for row in soup.find_all("tr"):
@@ -34,16 +37,28 @@ class MiscScraper:
         return output
 
     def scrap_programme_codes(self, url):
+        Logger.log_info("Scraping programme codes...")
+
         r = get(url)
         r.encoding = r.apparent_encoding
-        soup = BeautifulSoup(r.text, "html.parser", from_encoding="utf-8")
+        soup = BeautifulSoup(r.text, "html.parser")
 
         output = ""
+        current_faculty_code, current_faculty = "", ""
         for row in soup.find_all("tr"):
             cells = [d.get_text().strip() for d in row.find_all("td")]
-            if len(cells) != 2:
+            
+            # There are some empty rows in the table, skip them.
+            if not cells:
                 continue
 
-            output += f"{cells[0].strip()}|{cells[1].strip()}\n"
+            # Found a faculty row.
+            if len(cells) == 1:
+                faculty = cells[0].strip()
+                current_faculty_code = faculty.split("-")[0]
+                current_faculty = faculty.replace(f"{current_faculty_code}-", "").strip()
+                continue
+
+            output += f"{cells[0].strip()}|{cells[1].strip()}|{current_faculty}|{current_faculty_code}\n"
 
         return output
