@@ -38,23 +38,24 @@ class CoursePlanScraper(Scraper):
                     selective_soup = self.get_soup_from_url(f"https://obs.itu.edu.tr{cell0_a['href']}")
 
                     selective_courses = []
-                    selective_course_table = selective_soup.find("table")
+                    if selective_soup is not None:
+                        selective_course_table = selective_soup.find("table")
 
-                    if selective_course_table is not None:
-                        selective_course_rows = selective_course_table.find_all("tr")
+                        if selective_course_table is not None:
+                            selective_course_rows = selective_course_table.find_all("tr")
 
-                        # First row is just the header.
-                        for selective_row in selective_course_rows[1:]:
-                            selective_courses.append(selective_row.find("a").get_text().replace("\n", "").strip())
+                            # First row is just the header.
+                            for selective_row in selective_course_rows[1:]:
+                                selective_courses.append(selective_row.find("a").get_text().replace("\n", "").strip())
 
-                        semester_program.append({selective_courses_title.replace("\n", "").strip(): selective_courses})
-                    else:
-                        # Because ITU changed their website, I have no fucking clue what the "selective courses like below" is
-                        # but the new UI might have fixed that issue. I'm leaving this here just in case
-                        # ---------------------------------------------------------------------------------------------------
-                        # TODO: Add support for selective courses like this:
-                        # https://www.sis.itu.edu.tr/TR/ogrenci/lisans/ders-planlari/plan/MAK/20031081.html
-                        semester_program.append({selective_courses_title: []})
+                            semester_program.append({selective_courses_title.replace("\n", "").strip(): selective_courses})
+                        else:
+                            # Because ITU changed their website, I have no fucking clue what the "selective courses like below" is
+                            # but the new UI might have fixed that issue. I'm leaving this here just in case
+                            # ---------------------------------------------------------------------------------------------------
+                            # TODO: Add support for selective courses like this:
+                            # https://www.sis.itu.edu.tr/TR/ogrenci/lisans/ders-planlari/plan/MAK/20031081.html
+                            semester_program.append({selective_courses_title: []})
                 else:
                     semester_program.append(course_code)
 
