@@ -2,23 +2,24 @@ name: Refresh Lessons
 
 on:
   schedule:
-    # At every 15th minute from 4 through 59 past every hour from 2 through 23.
-    - cron: "4/15 2/1 * * *"
+    # At every 5th minute from 4 through 59 past every hour from 2 through 23.
+    - cron: "4/5 2/1 * * *"
 
   workflow_dispatch:
 
 jobs:
   refresh_lessons:
     runs-on: ubuntu-latest
+    timeout-minutes: 5
 
     steps:
       # Clones the repo
       - name: Checkout Repo Content
-        uses: actions/checkout@v2
+        uses: actions/checkout@v4
 
       # Clones the data repo
       - name: Clone Data Repo
-        uses: actions/checkout@v2
+        uses: actions/checkout@v4
         with:
           repository: itu-helper/data
           token: ${{ secrets.API_TOKEN_GITHUB }}
