@@ -1,6 +1,7 @@
 from time import perf_counter
 from tqdm import tqdm
 import argparse
+import os
 
 from course_scraper import CourseScraper
 from driver_manager import DriverManager
@@ -68,6 +69,52 @@ def save_course_plans(faculty_course_plans):
     #        ['MST 221', 'MST 201', ..., {'Selective': ['HSS 201', 'MST 261', ...]}, ... ]
     #   ]
 
+    # Read existing course plans
+    try:
+        existing_data = {}
+        if os.path.exists(COURSE_PLANS_FILE_PATH):
+            Logger.log_info("Reading existing course plans...")
+            current_faculty = None
+            current_plan = None
+            current_iter = None
+            
+            with open(COURSE_PLANS_FILE_PATH, "r", encoding="utf-8") as f:
+                lines = f.readlines()
+                
+                for line in lines:
+                    if line.startswith("# "):  # Faculty
+                        current_faculty = line[2:].strip()
+                        existing_data[current_faculty] = {}
+                    elif line.startswith("## "):  # Plan
+                        current_plan = line[3:].strip()
+                        existing_data[current_faculty][current_plan] = {}
+                    elif line.startswith("### "):  # Iteration
+                        current_iter = line[4:].strip()
+                        existing_data[current_faculty][current_plan][current_iter] = []
+                    elif not line.strip():  # Empty line
+                        continue
+                    else:  # Semester data
+                        if current_faculty and current_plan and current_iter:
+                            if not line.strip():  # Skip completely empty lines
+                                continue
+                            current_semester = existing_data[current_faculty][current_plan][current_iter]
+                            if len(current_semester) < 8:  # Only add if we haven't reached 8 semesters
+                                courses = line.strip().split("=")
+                                current_semester.append(courses)
+        
+        # Merge new data with existing data
+        for existing_faculty in existing_data:
+            if existing_faculty not in faculty_course_plans:
+                Logger.log_info(f"Merging faculty from local data: \"{existing_faculty}\"")
+                faculty_course_plans[existing_faculty] = {}
+            
+            for existing_faculty_plan in existing_data[existing_faculty]:
+                if existing_faculty_plan not in faculty_course_plans[existing_faculty]:
+                    Logger.log_info(f"Merging faculty plan from local data: \"{existing_faculty}/{existing_faculty_plan}\"")
+                    faculty_course_plans[existing_faculty][existing_faculty_plan] = existing_data[existing_faculty][existing_faculty_plan]
+    except Exception as e:
+        Logger.log_error(f"Error while reading existing course plans: {e}")
+    
     # Generate Lines
     lines = []
     faculties_tqdm = tqdm(faculty_course_plans.keys())
