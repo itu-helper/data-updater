@@ -2,6 +2,7 @@ from time import perf_counter
 from tqdm import tqdm
 import argparse
 import os
+import re
 
 from course_scraper import CourseScraper
 from driver_manager import DriverManager
@@ -37,7 +38,8 @@ def process_lesson_row(row):
     processed_row += data[10] + "|"  # Enrolled
     processed_row += extract_from_a(data[12])  # Major Rest.
 
-    return processed_row
+    # Remove multiple spaces and tabs.
+    return re.sub(r'\s*\|\s*', '|', processed_row.replace("\n", "").replace("\t", "")).strip()
 
 
 def save_lesson_rows(rows):

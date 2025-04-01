@@ -102,48 +102,4 @@ class LessonScraper(Scraper):
                 lessons += rows
                 break
         
-        """def scrap_course(index: int) -> list[str]:
-            # Check if the dropdown option is valid.
-            dropdown_option = dropdown_options[index]
-            if dropdown_option is None: return []
-
-            # Expand the course dropdown, if it isn't already expanded.
-            if not self.is_course_dropdown_expanded(course_code_dropdown):
-                course_code_dropdown.click()
-
-            # Update the tqdm.
-            course_name = dropdown_option.get_attribute("innerHTML").strip()
-            option_parent_tqdm.set_description(f"Scraping \"{course_name}\" lessons")
-
-            self.wait_until_loaded(dropdown_option)
-
-            dropdown_option.click()  # Choose the current course from the dropdown.
-            self.wait()
-
-            # Minimize the course dropdown, if it isn't already minimized.
-            if self.is_course_dropdown_expanded(course_code_dropdown):
-                course_code_dropdown.click()
-            
-            submit_button.click()  # Click Submit.
-
-            rows = self.scrap_current_table()   # Scrap the courses.
-            if len(rows) == 0:
-                Logger.log_warning(f"no rows found for {course_name}, trying again.")
-                self.wait(5)
-                rows = self.scrap_current_table()   # Scrap the courses.
-                Logger.log_warning(f"{len(rows)} rows found for {course_name}")
-            
-            self.wait()  # Wait a bit, just in case an alert appears.
-            
-            return rows
-
-        Logger.log_info("Scraping All Available Lessons")
-        for i in option_parent_tqdm:
-            for _ in range(10):  # This is basically just a while True loop with some safety measures.
-                try:
-                    courses += scrap_course(i)   # scrap the courses.
-                    break
-                except UnexpectedAlertPresentException:
-                    self.dismiss_alert()"""
-
         return lessons
