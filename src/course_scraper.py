@@ -118,7 +118,7 @@ class CourseScraper(Scraper):
                         course_prereqs = table.find_elements(By.CSS_SELECTOR, "tr")[1].find_elements(By.CSS_SELECTOR, "td")[1].get_attribute("innerHTML")
                         major_prereqs = table.find_elements(By.CSS_SELECTOR, "tr")[2].find_elements(By.CSS_SELECTOR, "td")[1].get_attribute("innerHTML")
 
-                output += course_prereqs.replace("\n", "") + "|"  # Course Prerequisites
+                output += course_prereqs.replace("\n", "").replace("Veya", "veya").replace("ve", "ve") + "|"  # Course Prerequisites
                 output += major_prereqs.replace("\n", "") + "|"  # Major Prerequisites
                 output += desc_text.replace("\n", "")  # Description
 
