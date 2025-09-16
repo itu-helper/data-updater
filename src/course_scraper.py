@@ -85,6 +85,10 @@ class CourseScraper(Scraper):
                     course_name_text = course_name_text.split("/")[0 if "Türkçe" in course_lang_text else 1].strip()
 
 
+                # Convert "MAT103E" to "MAT 103E"
+                if " " not in course_code_text and len(course_code_text) > 3:
+                    course_code_text = course_code_text[:3] + " " + course_code_text[3:]
+
                 output += course_code_text + "|"  # Course Code
                 output += course_name_text + "|"  # Course Name
                 output += course_lang_text + "|"  # Course Language
