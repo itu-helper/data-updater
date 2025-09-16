@@ -107,11 +107,14 @@ class Scraper:
         except TimeoutException:
             return False
 
-    def dismiss_alert(self) -> bool:
+    def dismiss_alert(self, driver=None) -> bool:
+        if driver is None:
+            driver = self.webdriver
+    
         # Dismiss the alert. Note that sometimes we get an error saying the alert was already dismissed.
         # so just wrapped the dismiss line inside a try-except block.
         try:
-            self.webdriver.switch_to.alert.accept()
+            driver.switch_to.alert.accept()
             return True
         except Exception:
             return False
