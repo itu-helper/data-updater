@@ -1,16 +1,14 @@
 from os import path
 import re
-from selenium.webdriver.common.by import By
-from selenium.common.exceptions import TimeoutException, UnexpectedAlertPresentException
-from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
+import requests
+from bs4 import BeautifulSoup
 from logger import Logger
 from constants import *
 from time import sleep
 import threading
 
 from scraper import Scraper
-from driver_manager import DriverManager
 
 
 class CourseScraper(Scraper):
@@ -45,78 +43,94 @@ class CourseScraper(Scraper):
 
         return list(set([c.strip() for c in course_codes if len(c.strip()) > 0]))  # Remove duplicates and empty strings.
 
-    def scrap_current_table(self, driver, course_code: str, timeout_dur: float=3.0, max_retries: int=5, log_prefix: str="") -> str|None:
-        output = ""
+    def scrap_current_table(self, source: str, course_code: str, timeout_dur: float=3.0, max_retries: int=5, log_prefix: str="") -> str|None:
+        """
+        Parse course HTML and return cleaned pipe-delimited course info.
+
+        source can be either a Selenium WebDriver (old behaviour) or an HTML string (preferred).
+        """
+        html = source
         attempt = 0
         while attempt < max_retries:
             if attempt > 0:
                 Logger.log_warning(f"{log_prefix} Retrying scrap_current_table for {course_code}, attempt {attempt+1}/{max_retries}")
             try:
-                all_rows = WebDriverWait(driver, timeout_dur).until(
-                    EC.presence_of_all_elements_located((By.CSS_SELECTOR, "tbody tr"))
-                )
+                soup = BeautifulSoup(html, 'html.parser')
 
-                def get_cell(row_idx, col_idx):
-                    tds = self.find_elements_by_css_selector("td", all_rows[row_idx])
-                    return tds[col_idx].get_attribute("innerHTML").replace("\n", " ")
+                # Helper to get cell text by tbody tr index and td index
+                def get_cell_by_idx(r_idx, c_idx):
+                    try:
+                        rows = soup.select('tbody tr')
+                        td = rows[r_idx].find_all('td')[c_idx]
+                        return str(td).replace('\n', ' ')
+                    except Exception:
+                        return ""
 
-                course_code_text = get_cell(2, 0)
-                course_name_text = get_cell(2, 1)
-                course_lang_text = get_cell(2, 2)
+                course_code_text = get_cell_by_idx(2, 0)
+                course_name_text = get_cell_by_idx(2, 1)
+                course_lang_text = get_cell_by_idx(2, 2)
 
+                # Remove tags but keep inner text later when cleaning
                 # This means there are 2 course
                 if "-" in course_code_text and len(course_code_text) > 1:
-                    course_codes = [c.strip() for c in course_code_text.split("-")]
+                    course_codes = [c.strip() for c in re.sub('<.*?>', '', course_code_text).split("-")]
                     course_index = -1
                     for idx, code in enumerate(course_codes):
                         if course_code in code:
                             course_index = idx
                             break
 
-                    course_code_text = course_codes[course_index]
-
-                    # For some fucking reason these are split with / when there are 2 courses instead of - like the course code.
-                    course_name_text = course_name_text.split("/")[course_index].strip()
-                    course_lang_text = course_lang_text.split("/")[course_index].strip()
+                    if course_index >= 0:
+                        course_code_text = course_codes[course_index]
+                        course_name_text = re.sub('<.*?>', '', course_name_text).split('/')[course_index].strip()
+                        course_lang_text = re.sub('<.*?>', '', course_lang_text).split('/')[course_index].strip()
 
                 # Sometimes, there is a single name yet name in multiple languages.
                 if "/" in course_name_text:
-                    course_lang_text = course_lang_text.split("/")[0].strip()  # In this case, there must be a single language but just in case.
+                    course_lang_text = course_lang_text.split("/")[0].strip()
                     course_name_text = course_name_text.split("/")[0 if "Türkçe" in course_lang_text else 1].strip()
 
-
                 # Convert "MAT103E" to "MAT 103E"
-                if " " not in course_code_text and len(course_code_text) > 3:
-                    course_code_text = course_code_text[:3] + " " + course_code_text[3:]
+                course_code_text_plain = re.sub('<.*?>', '', course_code_text)
+                if " " not in course_code_text_plain and len(course_code_text_plain) > 3:
+                    course_code_text_plain = course_code_text_plain[:3] + " " + course_code_text_plain[3:]
 
-                output += course_code_text + "|"  # Course Code
-                output += course_name_text + "|"  # Course Name
-                output += course_lang_text + "|"  # Course Language
+                output = ""
+                output += course_code_text_plain + "|"  # Course Code
+                output += re.sub('<.*?>', '', course_name_text) + "|"  # Course Name
+                output += re.sub('<.*?>', '', course_lang_text) + "|"  # Course Language
 
-                output += get_cell(4, 0) + "|"  # Course Credits
-                output += get_cell(4, 1) + "|"  # Course ECTS
+                output += re.sub('<.*?>', '', get_cell_by_idx(4, 0)) + "|"  # Course Credits
+                output += re.sub('<.*?>', '', get_cell_by_idx(4, 1)) + "|"  # Course ECTS
 
-                # These fields are dynamic so hardcoded indexes dont work. FAAAK
-                tables = WebDriverWait(driver, timeout_dur).until(
-                    EC.presence_of_all_elements_located((By.CSS_SELECTOR, "table"))
-                )[1:] # First one is used as a parent to all the other tables.
+                # Find all tables except first parent table
+                tables = soup.find_all('table')[1:]
 
                 desc_text = ""
                 course_prereqs = ""
                 major_prereqs = ""
                 for table in tables:
                     try:
-                        first_row = table.find_elements(By.CSS_SELECTOR, "tr")[0]
-                        first_cell = first_row.find_elements(By.CSS_SELECTOR, "td")[0].text.strip()
+                        first_row = table.find('tr')
+                        first_cell = first_row.find('td').get_text(strip=True)
                     except Exception:
                         continue
 
                     if "Ders Tanımı" in first_cell:
                         # Description table: get all text from 2nd row, 1st cell
-                        desc_text = table.find_elements(By.CSS_SELECTOR, "tr")[1].find_elements(By.CSS_SELECTOR, "td")[0].get_attribute("innerHTML").replace("\n", "")
+                        try:
+                            desc_text = table.find_all('tr')[1].find_all('td')[0].decode_contents().replace('\n', '')
+                        except Exception:
+                            desc_text = ""
                     elif "Önşartlar" in first_cell:
-                        course_prereqs = table.find_elements(By.CSS_SELECTOR, "tr")[1].find_elements(By.CSS_SELECTOR, "td")[1].get_attribute("innerHTML")
-                        major_prereqs = table.find_elements(By.CSS_SELECTOR, "tr")[2].find_elements(By.CSS_SELECTOR, "td")[1].get_attribute("innerHTML")
+                        try:
+                            course_prereqs = table.find_all('tr')[1].find_all('td')[1].decode_contents()
+                        except Exception:
+                            course_prereqs = ""
+                        try:
+                            major_prereqs = table.find_all('tr')[2].find_all('td')[1].decode_contents()
+                        except Exception:
+                            major_prereqs = ""
 
                 output += course_prereqs.replace("\n", "").replace("Veya", "veya").replace("ve", "ve") + "|"  # Course Prerequisites
                 output += major_prereqs.replace("\n", "") + "|"  # Major Prerequisites
@@ -128,40 +142,137 @@ class CourseScraper(Scraper):
                 text = re.sub(r"[\t\xa0\u00a0\u1680\u2000-\u200a\u202f\u205f\u3000]+", " ", text)  # Various whitespace
                 text = re.sub(r"\s+", " ", text)  # Normalize any remaining whitespace
                 return text
-            except UnexpectedAlertPresentException as e:
-                Logger.log_error(f"{log_prefix} (attempt {attempt+1}/{max_retries}) | Unexpected alert present, dismissing it.")
-                self.dismiss_alert(driver)
-            except Exception as e:
+            except Exception:
                 pass
-                        
-            sleep(0.5)
+
             attempt += 1
         Logger.log_error(f"{log_prefix} scrap_current_table failed after retries.")
         return None
 
+    # def scrap_current_table(self, driver, course_code: str, timeout_dur: float=3.0, max_retries: int=5, log_prefix: str="") -> str|None:
+    #     """Original selenium-based implementation extracted to keep compatibility."""
+    #     output = ""
+    #     attempt = 0
+    #     while attempt < max_retries:
+    #         if attempt > 0:
+    #             Logger.log_warning(f"{log_prefix} Retrying scrap_current_table for {course_code}, attempt {attempt+1}/{max_retries}")
+    #         try:
+    #             all_rows = WebDriverWait(driver, timeout_dur).until(
+    #                 EC.presence_of_all_elements_located((By.CSS_SELECTOR, "tbody tr"))
+    #             )
+
+    #             def get_cell(row_idx, col_idx):
+    #                 tds = self.find_elements_by_css_selector("td", all_rows[row_idx])
+    #                 return tds[col_idx].get_attribute("innerHTML").replace("\n", " ")
+
+    #             course_code_text = get_cell(2, 0)
+    #             course_name_text = get_cell(2, 1)
+    #             course_lang_text = get_cell(2, 2)
+
+    #             # This means there are 2 course
+    #             if "-" in course_code_text and len(course_code_text) > 1:
+    #                 course_codes = [c.strip() for c in course_code_text.split("-")]
+    #                 course_index = -1
+    #                 for idx, code in enumerate(course_codes):
+    #                     if course_code in code:
+    #                         course_index = idx
+    #                         break
+
+    #                 course_code_text = course_codes[course_index]
+
+    #                 # For some fucking reason these are split with / when there are 2 courses instead of - like the course code.
+    #                 course_name_text = course_name_text.split("/")[course_index].strip()
+    #                 course_lang_text = course_lang_text.split("/")[course_index].strip()
+
+    #             # Sometimes, there is a single name yet name in multiple languages.
+    #             if "/" in course_name_text:
+    #                 course_lang_text = course_lang_text.split("/")[0].strip()  # In this case, there must be a single language but just in case.
+    #                 course_name_text = course_name_text.split("/")[0 if "Türkçe" in course_lang_text else 1].strip()
+
+
+    #             # Convert "MAT103E" to "MAT 103E"
+    #             if " " not in course_code_text and len(course_code_text) > 3:
+    #                 course_code_text = course_code_text[:3] + " " + course_code_text[3:]
+
+    #             output += course_code_text + "|"  # Course Code
+    #             output += course_name_text + "|"  # Course Name
+    #             output += course_lang_text + "|"  # Course Language
+
+    #             output += get_cell(4, 0) + "|"  # Course Credits
+    #             output += get_cell(4, 1) + "|"  # Course ECTS
+
+    #             # These fields are dynamic so hardcoded indexes dont work. FAAAK
+    #             tables = WebDriverWait(driver, timeout_dur).until(
+    #                 EC.presence_of_all_elements_located((By.CSS_SELECTOR, "table"))
+    #             )[1:] # First one is used as a parent to all the other tables.
+
+    #             desc_text = ""
+    #             course_prereqs = ""
+    #             major_prereqs = ""
+    #             for table in tables:
+    #                 try:
+    #                     first_row = table.find_elements(By.CSS_SELECTOR, "tr")[0]
+    #                     first_cell = first_row.find_elements(By.CSS_SELECTOR, "td")[0].text.strip()
+    #                 except Exception:
+    #                     continue
+
+    #                 if "Ders Tanımı" in first_cell:
+    #                     # Description table: get all text from 2nd row, 1st cell
+    #                     desc_text = table.find_elements(By.CSS_SELECTOR, "tr")[1].find_elements(By.CSS_SELECTOR, "td")[0].get_attribute("innerHTML").replace("\n", "")
+    #                 elif "Önşartlar" in first_cell:
+    #                     course_prereqs = table.find_elements(By.CSS_SELECTOR, "tr")[1].find_elements(By.CSS_SELECTOR, "td")[1].get_attribute("innerHTML")
+    #                     major_prereqs = table.find_elements(By.CSS_SELECTOR, "tr")[2].find_elements(By.CSS_SELECTOR, "td")[1].get_attribute("innerHTML")
+
+    #             output += course_prereqs.replace("\n", "").replace("Veya", "veya").replace("ve", "ve") + "|"  # Course Prerequisites
+    #             output += major_prereqs.replace("\n", "") + "|"  # Major Prerequisites
+    #             output += desc_text.replace("\n", "")  # Description
+
+    #             # Clean output - Thx Claude
+    #             text = re.sub(r"[ \t]+", " ", re.sub(r"<.*?>", "", output)).replace("\n", " ").strip()
+    #             text = re.sub(r"[\r\n\u2028\u2029]+", " ", text)  # Line breaks
+    #             text = re.sub(r"[\t\xa0\u00a0\u1680\u2000-\u200a\u202f\u205f\u3000]+", " ", text)  # Various whitespace
+    #             text = re.sub(r"\s+", " ", text)  # Normalize any remaining whitespace
+    #             return text
+    #         except UnexpectedAlertPresentException as e:
+    #             Logger.log_error(f"{log_prefix} (attempt {attempt+1}/{max_retries}) | Unexpected alert present, dismissing it.")
+    #             self.dismiss_alert(driver)
+    #         except Exception as e:
+    #             pass
+                        
+    #         sleep(0.5)
+    #         attempt += 1
+    #     Logger.log_error(f"{log_prefix} scrap_current_table failed after retries.")
+    #     return None
+
     def scrap_courses_thread_routine(self, course_codes: list[str], thread_prefix: str, log_interval_modulo: int=100) -> None:
-        driver = DriverManager.create_driver()
-        driver.get(COURSES_URL)
-        sleep(3)
-
-        self.switch_to_turkish(driver, thread_prefix)
-
+        # Use requests to call the public API endpoint for each course and parse the returned HTML
+        session = requests.Session()
+        # A small timeout and retry logic per course
         for name, number in [c.split(" ") for c in course_codes]:
-            course_code_name = self.find_elements_by_css_selector("input[name='bransKodu']", driver)[0]
-            course_code_number = self.find_elements_by_css_selector("input[name='dersNo']", driver)[0]
-            submit_button = self.find_elements_by_css_selector("input[type='submit']", driver)[0]
-            
-            course_code_name.clear()
-            course_code_name.send_keys(name)
+            course_id = f"{name}{number}"
+            api_url = COURSES_API_URL.format(name, number)
 
-            course_code_number.clear()
-            course_code_number.send_keys(number)
+            html = None
+            attempts = 0
+            while attempts < 3:
+                try:
+                    resp = session.get(api_url, timeout=10)
+                    if resp.status_code == 200 and resp.text:
+                        html = resp.text
+                        break
+                    else:
+                        Logger.log_warning(f"{thread_prefix} Non-200 response {resp.status_code} for {course_id}")
+                except Exception as e:
+                    Logger.log_warning(f"{thread_prefix} Error fetching {course_id}: {e}")
+                attempts += 1
+                sleep(0.5)
 
-            submit_button.click()
-            self.wait()
+            if not html:
+                Logger.log_error(f"{thread_prefix} [red]Could not fetch HTML for \"{name} {number}\"[/red]")
+                continue
 
             Logger.log_info(f"{thread_prefix} Scrapping \"{name} {number}\"")
-            table_content = self.scrap_current_table(driver, f"{name}{number}", log_prefix=thread_prefix)
+            table_content = self.scrap_current_table(html, course_id, log_prefix=thread_prefix)
             if table_content is not None:
                 Logger.log_info(f"{thread_prefix} [bright_green]Scraped \"{name} {number}\"[/bright_green]")
                 self.courses.append(table_content)
@@ -172,7 +283,6 @@ class CourseScraper(Scraper):
                 Logger.log_error(f"{thread_prefix} [red]Could not scrape \"{name} {number}\"[/red]")
 
         Logger.log(f"{thread_prefix} [bright_green]Operation completed.[/bright_green]")
-        DriverManager.kill_driver(driver)
 
     def split_list_into_chunks(self, lst, num_chunks):
         # Calculate the average chunk size and remainder

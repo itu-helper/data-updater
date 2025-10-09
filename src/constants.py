@@ -1,6 +1,7 @@
 # === URLS ===
 LESSONS_URL = "https://obs.itu.edu.tr/public/DersProgram"
 COURSES_URL = "https://www.sis.itu.edu.tr/TR/ogrenci/lisans/ders-bilgileri/ders-bilgileri.php"
+COURSES_API_URL = "https://obs.itu.edu.tr/public/DersBilgi/DersBilgiSearch?bransKodu={0}&dersNo={1}"
 COURSE_PLAN_URLS = [
     "https://obs.itu.edu.tr/public/DersPlan/DersPlanlariList?programKodu={0}_LS&planTipiKodu=lisans",       # Undergraduate
     "https://obs.itu.edu.tr/public/DersPlan/DersPlanlariList?programKodu={0}_LS&planTipiKodu=uolp",         # UOLP
