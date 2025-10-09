@@ -185,7 +185,7 @@ class CourseScraper(Scraper):
                     except Exception:
                         major_prereqs = ""
 
-                output += course_prereqs.replace("\n", "").replace("Veya", "veya").replace("ve", "ve") + "|"  # Course Prerequisites
+                output += course_prereqs.replace("\n", "").replace("Veya", "veya").replace("Ve", "ve") + "|"  # Course Prerequisites
                 output += major_prereqs.replace("\n", "") + "|"  # Major Prerequisites
                 output += desc_text.replace("\n", "")  # Description
 
