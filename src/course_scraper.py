@@ -149,9 +149,9 @@ class CourseScraper(Scraper):
                 output += re.sub('<.*?>', '', course_lang_text) + "|"  # Course Language
 
                 credits_table = get_table("Kredi")
-                if credits_table and len(credits_table) > 0 and len(credits_table[0]) > 1:
-                    output += re.sub('<.*?>', '', credits_table[0][0]) + "|"  # Course Credits
-                    output += re.sub('<.*?>', '', credits_table[0][1]) + "|"  # Course ECTS
+                if credits_table and len(credits_table) > 1 and len(credits_table[1]) > 1:
+                    output += re.sub('<.*?>', '', credits_table[1][0].replace(",", ".")) + "|"  # Course Credits
+                    output += re.sub('<.*?>', '', credits_table[1][1].replace(",", ".")) + "|"  # Course ECTS
                 else:
                     output += "||"
 
