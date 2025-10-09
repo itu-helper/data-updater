@@ -43,7 +43,7 @@ class CourseScraper(Scraper):
 
         return list(set([c.strip() for c in course_codes if len(c.strip()) > 0]))  # Remove duplicates and empty strings.
 
-    def scrap_current_table(self, source: str, course_code: str, timeout_dur: float=3.0, max_retries: int=5, log_prefix: str="") -> str|None:
+    def scrap_table_html(self, source: str, course_code: str, timeout_dur: float=3.0, max_retries: int=5, log_prefix: str="") -> str|None:
         """
         Parse course HTML and return cleaned pipe-delimited course info.
 
@@ -57,18 +57,57 @@ class CourseScraper(Scraper):
             try:
                 soup = BeautifulSoup(html, 'html.parser')
 
-                # Helper to get cell text by tbody tr index and td index
-                def get_cell_by_idx(r_idx, c_idx):
+                # Helper to find a table by inspecting each <table>'s header
+                # Match is performed against the table's first <th> inside <thead> (fallbacks applied).
+                # Returns tbody <td> values as a 2D list of strings (each row is a list of td contents).
+                def get_table(first_header: str) -> list[list[str]]:
                     try:
-                        rows = soup.select('tbody tr')
-                        td = rows[r_idx].find_all('td')[c_idx]
-                        return str(td).replace('\n', ' ')
-                    except Exception:
-                        return ""
+                        # All the tables in the page are also wrapped in a table and it's the first table so skipt it.
+                        tables = soup.find_all('table')[1:]
+                        for table in tables:
+                            try:
+                                # Try to get header text from thead > tr > th
+                                header_text = ""
+                                thead = table.find('thead')
+                                if thead:
+                                    first_th = thead.find('tr')
+                                    if first_th:
+                                        first_th = first_th.find('th')
+                                        if first_th:
+                                            header_text = first_th.get_text(strip=True)
 
-                course_code_text = get_cell_by_idx(2, 0)
-                course_name_text = get_cell_by_idx(2, 1)
-                course_lang_text = get_cell_by_idx(2, 2)
+                                # Fallback: if no thead or th, try first row's first cell (could be th or td)
+                                if not header_text:
+                                    first_row = table.find('tr')
+                                    if first_row:
+                                        first_cell = first_row.find(['th', 'td'])
+                                        if first_cell:
+                                            header_text = first_cell.get_text(strip=True)
+
+                                if first_header in header_text:
+                                    # Collect tbody rows' td values
+                                    tbody = table.find('tbody') or table
+                                    table_rows = []
+                                    for tr in tbody.find_all('tr'):
+                                        tds = tr.find_all('td')
+                                        row_vals = [td.decode_contents().replace('\n', '').strip() for td in tds]
+                                        table_rows.append(row_vals)
+                                    return table_rows
+                            except Exception as e:
+                                Logger.log_error(f"get_table inner error: {e}")
+                                continue
+                    except Exception as e:
+                        Logger.log_error(f"get_table outer error: {e}")
+                        pass
+                    return []
+
+                course_details_table = get_table("Ders Kodu")
+                if not course_details_table:
+                    raise Exception("No course details table found")
+        
+                course_code_text = course_details_table[0][0]
+                course_name_text = course_details_table[0][1]
+                course_lang_text = course_details_table[0][2]
 
                 # Remove tags but keep inner text later when cleaning
                 # This means there are 2 course
@@ -82,55 +121,66 @@ class CourseScraper(Scraper):
 
                     if course_index >= 0:
                         course_code_text = course_codes[course_index]
-                        course_name_text = re.sub('<.*?>', '', course_name_text).split('/')[course_index].strip()
-                        course_lang_text = re.sub('<.*?>', '', course_lang_text).split('/')[course_index].strip()
+                        
+                        splitted_course_name_text = re.sub('<.*?>', '', course_name_text).split('/')
+                        course_name_text = splitted_course_name_text[min(course_index, len(splitted_course_name_text) - 1)].strip()
+                        
+                        splitted_course_lang_text = re.sub('<.*?>', '', course_lang_text).split('/')
+                        course_lang_text = splitted_course_lang_text[min(course_index, len(splitted_course_lang_text) - 1)].strip()
 
                 # Sometimes, there is a single name yet name in multiple languages.
                 if "/" in course_name_text:
                     course_lang_text = course_lang_text.split("/")[0].strip()
-                    course_name_text = course_name_text.split("/")[0 if "Türkçe" in course_lang_text else 1].strip()
+
+                    course_names = course_name_text.split("/")
+                    course_name_text = course_names[min(0 if "Türkçe" in course_lang_text else 1, len(course_names) - 1)].strip()
 
                 # Convert "MAT103E" to "MAT 103E"
                 course_code_text_plain = re.sub('<.*?>', '', course_code_text)
                 if " " not in course_code_text_plain and len(course_code_text_plain) > 3:
-                    course_code_text_plain = course_code_text_plain[:3] + " " + course_code_text_plain[3:]
+                    if "TB001" in course_code_text_plain:
+                        course_code_text_plain = course_code_text_plain[:2] + " " + course_code_text_plain[2:]
+                    else:
+                        course_code_text_plain = course_code_text_plain[:3] + " " + course_code_text_plain[3:]
 
                 output = ""
                 output += course_code_text_plain + "|"  # Course Code
                 output += re.sub('<.*?>', '', course_name_text) + "|"  # Course Name
                 output += re.sub('<.*?>', '', course_lang_text) + "|"  # Course Language
 
-                output += re.sub('<.*?>', '', get_cell_by_idx(4, 0)) + "|"  # Course Credits
-                output += re.sub('<.*?>', '', get_cell_by_idx(4, 1)) + "|"  # Course ECTS
+                credits_table = get_table("Kredi")
+                if credits_table and len(credits_table) > 0 and len(credits_table[0]) > 1:
+                    output += re.sub('<.*?>', '', credits_table[0][0]) + "|"  # Course Credits
+                    output += re.sub('<.*?>', '', credits_table[0][1]) + "|"  # Course ECTS
+                else:
+                    output += "||"
 
-                # Find all tables except first parent table
-                tables = soup.find_all('table')[1:]
-
+                # Use get_table to find tables by their first <td> header inside a <tbody>
                 desc_text = ""
                 course_prereqs = ""
                 major_prereqs = ""
-                for table in tables:
-                    try:
-                        first_row = table.find('tr')
-                        first_cell = first_row.find('td').get_text(strip=True)
-                    except Exception:
-                        continue
 
-                    if "Ders Tanımı" in first_cell:
-                        # Description table: get all text from 2nd row, 1st cell
-                        try:
-                            desc_text = table.find_all('tr')[1].find_all('td')[0].decode_contents().replace('\n', '')
-                        except Exception:
-                            desc_text = ""
-                    elif "Önşartlar" in first_cell:
-                        try:
-                            course_prereqs = table.find_all('tr')[1].find_all('td')[1].decode_contents()
-                        except Exception:
-                            course_prereqs = ""
-                        try:
-                            major_prereqs = table.find_all('tr')[2].find_all('td')[1].decode_contents()
-                        except Exception:
-                            major_prereqs = ""
+                # Description table: look for a tbody whose first cell contains 'Ders Tanımı'
+                desc_table = get_table("Ders Tanımı")
+                if desc_table and len(desc_table) > 0 and len(desc_table[0]) > 0:
+                    try:
+                        desc_text = desc_table[0][0]
+                    except Exception:
+                        desc_text = ""
+
+                # Prerequisites table: look for a tbody whose first cell contains 'Önşartlar'
+                prereq_table = get_table("Önşartlar")
+                if prereq_table and len(prereq_table) > 0 and len(prereq_table[0]) > 1:
+                    # course_prereqs is expected at row index 1, td index 1
+                    try:
+                        course_prereqs = prereq_table[0][1] if len(prereq_table[0]) > 1 else ""
+                    except Exception:
+                        course_prereqs = ""
+                if prereq_table and len(prereq_table) > 1:
+                    try:
+                        major_prereqs = prereq_table[1][1] if len(prereq_table[1]) > 1 else ""
+                    except Exception:
+                        major_prereqs = ""
 
                 output += course_prereqs.replace("\n", "").replace("Veya", "veya").replace("ve", "ve") + "|"  # Course Prerequisites
                 output += major_prereqs.replace("\n", "") + "|"  # Major Prerequisites
@@ -142,8 +192,8 @@ class CourseScraper(Scraper):
                 text = re.sub(r"[\t\xa0\u00a0\u1680\u2000-\u200a\u202f\u205f\u3000]+", " ", text)  # Various whitespace
                 text = re.sub(r"\s+", " ", text)  # Normalize any remaining whitespace
                 return text
-            except Exception:
-                pass
+            except Exception as e:
+                Logger.log_error(f"{log_prefix} scrap_current_table failed for {course_code}:\n{e}")
 
             attempt += 1
         Logger.log_error(f"{log_prefix} scrap_current_table failed after retries.")
@@ -250,7 +300,19 @@ class CourseScraper(Scraper):
         # A small timeout and retry logic per course
         for name, number in [c.split(" ") for c in course_codes]:
             course_id = f"{name}{number}"
-            api_url = COURSES_API_URL.format(name, number)
+
+            # Some course number suffixes are not accepted by the API
+            api_friendly_number = number
+            if api_friendly_number.endswith("T"):
+                api_friendly_number = api_friendly_number[:-1]
+            if api_friendly_number.endswith("CO"):
+                api_friendly_number = api_friendly_number[:-2]
+            if api_friendly_number.endswith("ES"):
+                api_friendly_number = api_friendly_number[:-2]
+            if api_friendly_number.endswith("SC"):
+                api_friendly_number = api_friendly_number[:-2]
+
+            api_url = COURSES_API_URL.format(name, api_friendly_number)
 
             html = None
             attempts = 0
@@ -272,7 +334,7 @@ class CourseScraper(Scraper):
                 continue
 
             Logger.log_info(f"{thread_prefix} Scrapping \"{name} {number}\"")
-            table_content = self.scrap_current_table(html, course_id, log_prefix=thread_prefix)
+            table_content = self.scrap_table_html(html, course_id, log_prefix=thread_prefix)
             if table_content is not None:
                 Logger.log_info(f"{thread_prefix} [bright_green]Scraped \"{name} {number}\"[/bright_green]")
                 self.courses.append(table_content)
