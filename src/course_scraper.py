@@ -68,6 +68,7 @@ class CourseScraper(Scraper):
                             try:
                                 # Try to get header text from thead > tr > th
                                 header_text = ""
+                                no_thead = False
                                 thead = table.find('thead')
                                 if thead:
                                     first_th = thead.find('tr')
@@ -83,12 +84,14 @@ class CourseScraper(Scraper):
                                         first_cell = first_row.find(['th', 'td'])
                                         if first_cell:
                                             header_text = first_cell.get_text(strip=True)
+                                            no_thead = True
 
                                 if first_header in header_text:
                                     # Collect tbody rows' td values
                                     tbody = table.find('tbody') or table
                                     table_rows = []
-                                    for tr in tbody.find_all('tr'):
+                                    rows = tbody.find_all('tr')[1:] if no_thead else tbody.find_all('tr')
+                                    for tr in rows:
                                         tds = tr.find_all('td')
                                         row_vals = [td.decode_contents().replace('\n', '').strip() for td in tds]
                                         table_rows.append(row_vals)
@@ -149,9 +152,9 @@ class CourseScraper(Scraper):
                 output += re.sub('<.*?>', '', course_lang_text) + "|"  # Course Language
 
                 credits_table = get_table("Kredi")
-                if credits_table and len(credits_table) > 1 and len(credits_table[1]) > 1:
-                    output += re.sub('<.*?>', '', credits_table[1][0].replace(",", ".")) + "|"  # Course Credits
-                    output += re.sub('<.*?>', '', credits_table[1][1].replace(",", ".")) + "|"  # Course ECTS
+                if credits_table and len(credits_table) > 0 and len(credits_table[0]) > 1:
+                    output += re.sub('<.*?>', '', credits_table[0][0].replace(",", ".")) + "|"  # Course Credits
+                    output += re.sub('<.*?>', '', credits_table[0][1].replace(",", ".")) + "|"  # Course ECTS
                 else:
                     output += "||"
 
