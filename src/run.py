@@ -55,8 +55,16 @@ def save_lesson_rows(rows):
 def save_course_rows(rows):
     Logger.log_info("Saving Course Rows...")
 
+    def fix_row_compability(row: str):
+        # Convert the new style to the old style for compatibility.
+        return row.replace(" veya", "veya ").replace("veya  ", "veya ") \
+            .replace(" ve", "ve") \
+            .replace("( ", "(") \
+            .replace(" )", ")") \
+            .replace("MIN.", "MIN").replace("MAX.", "MAX")
+
     # Save each row to a different line.
-    lines = [f"{row}\n" for row in sorted(rows)]
+    lines = [f"{fix_row_compability(row)}\n" for row in sorted(rows)]
 
     with open(COURSES_FILE_PATH, "w", encoding="utf-8") as f:
         f.writelines(lines)
