@@ -43,22 +43,48 @@ class MiscScraper:
         r.encoding = r.apparent_encoding
         soup = BeautifulSoup(r.text, "html.parser")
 
+        tbody = soup.find("tbody")
+        if not tbody:
+            return ""
+
         output = ""
         current_faculty_code, current_faculty = "", ""
-        for row in soup.find_all("tr"):
-            cells = [d.get_text().strip() for d in row.find_all("td")]
+        last_item_is_broken_row, broken_row_cells = False, []
+        for element in tbody.children:
+            # Skip text nodes and non-tag elements
+            if not hasattr(element, "name") or element.name is None:
+                continue
             
-            # There are some empty rows in the table, skip them.
-            if not cells:
-                continue
+            # Handle proper rows
+            if element.name == "tr":
+                cells = [d.get_text().strip() for d in element.find_all("td")]
+                
+                # There are some empty rows in the table, skip them.
+                if not cells:
+                    continue
 
-            # Found a faculty row.
-            if len(cells) == 1:
-                faculty = cells[0].strip()
-                current_faculty_code = faculty.split("-")[0]
-                current_faculty = faculty.replace(f"{current_faculty_code}-", "").strip()
-                continue
+                # Found a faculty row.
+                if len(cells) == 1:
+                    faculty = cells[0].strip()
+                    current_faculty_code = faculty.split("-")[0]
+                    current_faculty = faculty.replace(f"{current_faculty_code}-", "").strip()
+                    continue
 
-            output += f"{cells[0].strip()}|{cells[1].strip()}|{current_faculty}|{current_faculty_code}\n"
+                output += f"{cells[0].strip()}|{cells[1].strip()}|{current_faculty}|{current_faculty_code}\n"
+            
+            # Handle broken rows (https://github.com/itu-helper/data-updater/issues/4)
+            if element.name == "td":
+                if not last_item_is_broken_row:
+                    broken_row_cells = []
+
+                broken_row_cells.append(element.get_text().strip())
+                last_item_is_broken_row = True
+                
+                # Only process if we have exactly 2 cells (course code and name)
+                if len(broken_row_cells) == 2:
+                    output += f"{broken_row_cells[0].strip()}|{broken_row_cells[1].strip()}|{current_faculty}|{current_faculty_code}\n"
+                    broken_row_cells = []
+            else:
+                last_item_is_broken_row = False
 
         return output
