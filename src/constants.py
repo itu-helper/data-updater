@@ -8,6 +8,7 @@ COURSE_PLAN_URLS = [
     "https://obs.itu.edu.tr/public/DersPlan/DersPlanlariList?programKodu={0}_OL&planTipiKodu=on-lisans",    # Graduate
 ]
 BUILDING_CODES_URL = "https://www.sis.itu.edu.tr/TR/obs-hakkinda/bina-kodlari.php"
+BUILDING_CODES_URL2 = "https://obs.itu.edu.tr/public/GenelTanimlamalar/BinaKodlariList"
 PROGRAMME_CODES_URL = "https://www.sis.itu.edu.tr/TR/obs-hakkinda/lisans-program-kodlari.php"
 
 # === FILE NAMES ===

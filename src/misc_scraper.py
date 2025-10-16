@@ -6,12 +6,29 @@ from logger import Logger
 
 class MiscScraper:
     def scrap_data(self):
+        # There are 2 diff URLS for buildings for some fking reason, scrap them both the second one has no campus info
+        building_codes = self.scrap_building_codes(BUILDING_CODES_URL) + self.scrap_building_codes(BUILDING_CODES_URL2, default_campus="")
+        
+        # Remove duplicates
+        lines = []
+        for line in building_codes.split("\n"):
+            b = line.split("|")[0]  # Building code
+            for existing_line in lines:
+                # If building code already exists, keep the longer name (longer usually means campus is included)
+                if existing_line.startswith(b + "|"):
+                    if len(line) > len(existing_line):
+                        lines.remove(existing_line)
+                        lines.append(line)
+                    break
+            else:
+                lines.append(line)
+
         return (
-            self.scrap_building_codes(BUILDING_CODES_URL),
-            self.scrap_programme_codes(PROGRAMME_CODES_URL),
+            "\n".join(lines).strip() + "\n",
+             self.scrap_programme_codes(PROGRAMME_CODES_URL),
         )
 
-    def scrap_building_codes(self, url):
+    def scrap_building_codes(self, url, default_campus="Ayazağa"):
         Logger.log_info("Scraping building codes...")
 
         r = get(url)
@@ -22,15 +39,17 @@ class MiscScraper:
         for row in soup.find_all("tr"):
             cells = [d.get_text().strip() for d in row.find_all("td")]
 
-            if "(" not in cells[1]:
-                cells[1] += u" (Ayazağa)"
+            if "(" not in cells[1] and len(default_campus) > 0:
+                cells[1] += u" (${default_faculty})"
 
             code = cells[0].strip()
 
             splitted_name = cells[1].split("(")
-            campus_name = splitted_name[len(
-                splitted_name) - 1].strip().replace(")", "")
+            campus_name = splitted_name[len(splitted_name) - 1].strip().replace(")", "")
             building_name = cells[1].replace(f"({campus_name})", "").strip()
+
+            if (campus_name == building_name):
+                campus_name = default_campus
 
             output += f"{code}|{building_name}|{campus_name}\n"
 
