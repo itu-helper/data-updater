@@ -109,7 +109,7 @@ class CoursePlanScraper(Scraper):
 
     def scrap_faculty_course_plans_routine(self, programme_codes: str, thread_no: int):
         thread_prefix = f"[royal_blue1][Thread {str(thread_no).zfill(2)}][/royal_blue1]"
-        for programme_code, programme_name, faculty, faculty_code in programme_codes:
+        for programme_code, programme_name, faculty, programme_type in programme_codes:
             if "Yandal" in programme_name:
                 Logger.log_info(f"{thread_prefix} Skipping the course plan for [blue]{programme_name}[/blue] in [blue]{faculty}[/blue] as it is a \"Yandal\" program.")
                 continue
@@ -117,12 +117,19 @@ class CoursePlanScraper(Scraper):
             if faculty not in self.faculty_course_plans:
                 self.faculty_course_plans[faculty] = {}
 
-            for url in COURSE_PLAN_URLS:
+            if programme_type not in COURSE_PLAN_URLS.keys():
+                Logger.log_error(f"{thread_prefix} Skipping the course plan for [blue]{programme_name}[/blue] in [blue]{faculty}[/blue] as the programme type \"{programme_type}\" is unknown.")
+                continue
+
+            for url in COURSE_PLAN_URLS[programme_type]:
                 Logger.log_info(f"{thread_prefix} Scraping the course plan for [blue]{programme_name}[/blue] in [blue]{faculty}[/blue].")
                 iters = self.scrap_iterations(programme_name, url.format(programme_code), thread_prefix)
                 if len(iters) != 0:
                     self.faculty_course_plans[faculty][programme_name] = iters
                     break
+
+            if programme_name not in self.faculty_course_plans[faculty]:
+                Logger.log_warning(f"{thread_prefix} Could not find any courses plan for [blue]{programme_name}[/blue] in [blue]{faculty}[/blue].")
 
     # While splitting, make sure to have the plans of the same faculty be in the same chunk.
     def split_programme_codes_into_chunks(self, programme_codes, num_chunks):
@@ -132,7 +139,7 @@ class CoursePlanScraper(Scraper):
         chunks = []
         current_chunk = []
 
-        for programme_code, programme_name, faculty, faculty_code in programme_codes:
+        for programme_code, programme_name, faculty, programme_type in programme_codes:
             is_chunk_full = len(current_chunk) >= target_chunk_size
             belongs_to_same_faculty_with_last = len(current_chunk) > 0 and current_chunk[-1][2] == faculty
 
@@ -140,7 +147,7 @@ class CoursePlanScraper(Scraper):
                 chunks.append(current_chunk)
                 current_chunk = []
 
-            current_chunk.append((programme_code, programme_name, faculty, faculty_code))
+            current_chunk.append((programme_code, programme_name, faculty, programme_type))
 
         # If there are remaining items not added to chunks, add them.
         if len(current_chunk) > 0 and len(chunks) > 0:
@@ -173,7 +180,24 @@ class CoursePlanScraper(Scraper):
         for t in threads: t.join()
 
         # Faculties
-        ordered_faculty_names = []
+        ordered_faculty_names = [
+            "İnşaat Fakültesi",
+            "Mimarlık Fakültesi",
+            "Makina Fakültesi",
+            "Elektrik Elektronik Fakültesi",
+            "Maden Fakültesi",
+            "Kimya Metalurji Fakültesi",
+            "İşletme Fakültesi",
+            "Gemi İnşaatı ve Deniz Bilimleri Fakültesi",
+            "Fen Edebiyat Fakültesi",
+            "Uçak ve Uzay Bilimleri Fakültesi",
+            "Türk Musikisi Devlet Konservatuvarı",
+            "Denizcilik Fakültesi",
+            "Tekstil Teknolojileri ve Tasarımı Fakültesi",
+            "Bilgisayar ve Bilişim Fakültesi",
+            "İTÜ-KKTC Eğitim-Araştırma Yerleşkeleri",
+            "Siber Güvenlik Meslek Yüksekokulu"
+        ]
         for _, __, faculty, ___ in programme_codes:
             if faculty not in ordered_faculty_names:
                 ordered_faculty_names.append(faculty)

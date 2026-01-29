@@ -2,14 +2,22 @@
 LESSONS_URL = "https://obs.itu.edu.tr/public/DersProgram"
 COURSES_URL = "https://www.sis.itu.edu.tr/TR/ogrenci/lisans/ders-bilgileri/ders-bilgileri.php"
 COURSES_API_URL = "https://obs.itu.edu.tr/public/DersBilgi/DersBilgiSearch?bransKodu={0}&dersNo={1}"
-COURSE_PLAN_URLS = [
-    "https://obs.itu.edu.tr/public/DersPlan/DersPlanlariList?programKodu={0}_LS&planTipiKodu=lisans",       # Undergraduate
-    "https://obs.itu.edu.tr/public/DersPlan/DersPlanlariList?programKodu={0}_LS&planTipiKodu=uolp",         # UOLP
-    "https://obs.itu.edu.tr/public/DersPlan/DersPlanlariList?programKodu={0}_OL&planTipiKodu=on-lisans",    # Graduate
-]
+COURSE_PLAN_URLS = {
+    "LS": [
+        "https://obs.itu.edu.tr/public/DersPlan/DersPlanlariList?programKodu={0}_LS&planTipiKodu=lisans", # Undergraduate
+        "https://obs.itu.edu.tr/public/DersPlan/DersPlanlariList?programKodu={0}_LS&planTipiKodu=uolp", # Undergraduate - UOLP
+    ],       
+    "OL": [
+        "https://obs.itu.edu.tr/public/DersPlan/DersPlanlariList?programKodu={0}_OL&planTipiKodu=on-lisans" # Graduate
+    ]      
+}
 BUILDING_CODES_URL = "https://www.sis.itu.edu.tr/TR/obs-hakkinda/bina-kodlari.php"
 BUILDING_CODES_URL2 = "https://obs.itu.edu.tr/public/GenelTanimlamalar/BinaKodlariList"
-PROGRAMME_CODES_URL = "https://www.sis.itu.edu.tr/TR/obs-hakkinda/lisans-program-kodlari.php"
+PROGRAMME_CODES_URLS = {
+    "OL": "https://obs.itu.edu.tr/public/GenelTanimlamalar/ProgramKodlariList?programSeviyeTipiId=1",
+    "LS": "https://obs.itu.edu.tr/public/GenelTanimlamalar/ProgramKodlariList?programSeviyeTipiId=2",
+}
+
 
 # === FILE NAMES ===
 LESSONS_FILE_PATH = "data/lessons.psv"
